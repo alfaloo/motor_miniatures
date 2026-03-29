@@ -97,9 +97,8 @@ export default async function DashboardPage() {
   allItems
     .filter((item) => !item.is_sold)
     .forEach((item) => {
-      tokenize(item.brand).forEach((token) => {
-        brandCounts.set(token, (brandCounts.get(token) ?? 0) + 1);
-      });
+      const key = item.brand.toLowerCase();
+      brandCounts.set(key, (brandCounts.get(key) ?? 0) + 1);
     });
   const topBrands = Array.from(brandCounts.entries())
     .sort((a, b) => b[1] - a[1])
