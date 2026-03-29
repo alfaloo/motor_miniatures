@@ -86,16 +86,7 @@ export default function DashboardCharts({
               tickLine={false}
               tickFormatter={(v: number) => `$${v}`}
             />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [
-                    `$${Number(value).toLocaleString()}`,
-                    "Value",
-                  ]}
-                />
-              }
-            />
+            <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartContainer>
