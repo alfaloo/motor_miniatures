@@ -1,0 +1,121 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { Menu, Car } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+
+const navLinks = [
+  { label: "Collection", href: "/" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Search", href: "/search" },
+  { label: "Settings", href: "/settings" },
+];
+
+interface NavbarProps {
+  username: string;
+}
+
+export function Navbar({ username }: NavbarProps) {
+  const pathname = usePathname();
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-slate-700 bg-slate-900/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2 font-semibold text-slate-100 mr-6">
+          <Car className="h-5 w-5 text-blue-500" />
+          Motor Miniatures
+        </Link>
+
+        {/* Desktop nav links */}
+        <nav className="hidden md:flex items-center gap-1 flex-1">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                pathname === link.href
+                  ? "bg-slate-800 text-slate-100"
+                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right side */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Avatar dropdown (desktop) */}
+          <div className="hidden md:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-slate-400 hover:text-slate-100">
+                  {username}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-slate-100">
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-400 hover:text-red-300 focus:text-red-300 focus:bg-slate-700"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  Log Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Mobile hamburger */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-slate-900 border-slate-700 w-64">
+                <nav className="flex flex-col gap-1 mt-6">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                        pathname === link.href
+                          ? "bg-slate-800 text-slate-100"
+                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  <div className="border-t border-slate-700 mt-4 pt-4">
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/login" })}
+                      className="w-full text-left px-3 py-2 rounded-md text-sm text-red-400 hover:text-red-300 hover:bg-slate-800 transition-colors"
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
