@@ -6,6 +6,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  LabelList,
 } from "recharts";
 import {
   ChartContainer,
@@ -71,7 +72,7 @@ export default function DashboardCharts({
         >
           <BarChart
             data={purchaseValueByMonth}
-            margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+            margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis
@@ -86,17 +87,15 @@ export default function DashboardCharts({
               tickLine={false}
               tickFormatter={(v: number) => `$${v}`}
             />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [
-                    `$${Number(value).toLocaleString()}`,
-                    "Value",
-                  ]}
-                />
-              }
-            />
-            <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]}>
+              <LabelList
+                dataKey="value"
+                position="top"
+                formatter={(v: number) => `$${v}`}
+                style={{ fill: "#94A3B8", fontSize: 11 }}
+              />
+            </Bar>
           </BarChart>
         </ChartContainer>
       </ChartCard>
@@ -109,7 +108,7 @@ export default function DashboardCharts({
         >
           <BarChart
             data={modelCountByMonth}
-            margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+            margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis
@@ -125,7 +124,13 @@ export default function DashboardCharts({
               allowDecimals={false}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]}>
+              <LabelList
+                dataKey="count"
+                position="top"
+                style={{ fill: "#94A3B8", fontSize: 11 }}
+              />
+            </Bar>
           </BarChart>
         </ChartContainer>
       </ChartCard>
@@ -144,7 +149,7 @@ export default function DashboardCharts({
             <BarChart
               data={topBrands}
               layout="vertical"
-              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+              margin={{ top: 5, right: 35, left: 10, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis
@@ -163,7 +168,13 @@ export default function DashboardCharts({
                 width={70}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]}>
+                <LabelList
+                  dataKey="count"
+                  position="right"
+                  style={{ fill: "#94A3B8", fontSize: 11 }}
+                />
+              </Bar>
             </BarChart>
           </ChartContainer>
         )}
@@ -183,7 +194,7 @@ export default function DashboardCharts({
             <BarChart
               data={topMakes}
               layout="vertical"
-              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+              margin={{ top: 5, right: 35, left: 10, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis
@@ -202,7 +213,13 @@ export default function DashboardCharts({
                 width={70}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]}>
+                <LabelList
+                  dataKey="count"
+                  position="right"
+                  style={{ fill: "#94A3B8", fontSize: 11 }}
+                />
+              </Bar>
             </BarChart>
           </ChartContainer>
         )}

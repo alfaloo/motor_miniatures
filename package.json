@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:migrate && next build",
+    "build": "tsx db/migrate.ts && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "dotenv -e .env.local -- drizzle-kit generate",
