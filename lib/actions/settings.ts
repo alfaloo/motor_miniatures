@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 
 export async function updateUserSettings(collectingSinceYear: number) {
   const session = await auth();
@@ -61,6 +62,46 @@ export async function updateUsername(newUsername: string) {
   await db
     .update(users)
     .set({ username: trimmed })
+    .where(eq(users.id, session.user.id));
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+export async function updatePassword(currentPassword: string, newPassword: string) {
+  const session = await auth();
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (!currentPassword || !newPassword) {
+    return { error: "All password fields are required" };
+  }
+
+  if (newPassword.length < 8) {
+    return { error: "New password must be at least 8 characters" };
+  }
+
+  const [user] = await db
+    .select({ password: users.password })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  if (!user) {
+    return { error: "User not found" };
+  }
+
+  const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!passwordMatch) {
+    return { error: "Current password is incorrect" };
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+
+  await db
+    .update(users)
+    .set({ password: hashed })
     .where(eq(users.id, session.user.id));
 
   revalidatePath("/settings");
