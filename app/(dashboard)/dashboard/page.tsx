@@ -31,11 +31,12 @@ export default async function DashboardPage() {
 
   // Fetch user settings
   const userRecord = await db
-    .select({ months_look_back: users.months_look_back })
+    .select({ months_look_back: users.months_look_back, top_values_count: users.top_values_count })
     .from(users)
     .where(eq(users.id, userId))
     .then((rows) => rows[0]);
   const monthsLookBack = userRecord?.months_look_back ?? 12;
+  const topValuesCount = userRecord?.top_values_count ?? 12;
 
   // Fetch all items for the user in one query
   const allItems = await db
@@ -110,7 +111,7 @@ export default async function DashboardPage() {
     });
   const topBrands = Array.from(brandCounts.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
+    .slice(0, topValuesCount)
     .map(([name, count]) => ({ name, count }));
 
   // Chart 4: Top 12 Car Makes in Collection (unsold only)
@@ -124,7 +125,7 @@ export default async function DashboardPage() {
     });
   const topMakes = Array.from(makeCounts.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
+    .slice(0, topValuesCount)
     .map(([name, count]) => ({ name, count }));
 
   return (
@@ -151,6 +152,7 @@ export default async function DashboardPage() {
         topBrands={topBrands}
         topMakes={topMakes}
         monthsLookBack={monthsLookBack}
+        topValuesCount={topValuesCount}
       />
     </div>
   );

@@ -25,6 +25,7 @@ interface DashboardChartsProps {
   topBrands: TokenData[];
   topMakes: TokenData[];
   monthsLookBack: number;
+  topValuesCount: number;
 }
 
 const BLUE = "#2563EB";
@@ -63,6 +64,7 @@ export default function DashboardCharts({
   topBrands,
   topMakes,
   monthsLookBack,
+  topValuesCount,
 }: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -137,8 +139,8 @@ export default function DashboardCharts({
         </ChartContainer>
       </ChartCard>
 
-      {/* Chart 3: Top 12 Model Brands */}
-      <ChartCard title="Top 12 Model Brands in Collection">
+      {/* Chart 3: Top N Model Brands */}
+      <ChartCard title={`Top ${topValuesCount} Model Brands in Collection`}>
         {topBrands.length === 0 ? (
           <p className="text-slate-400 text-sm py-8 text-center">
             No data available
@@ -182,8 +184,8 @@ export default function DashboardCharts({
         )}
       </ChartCard>
 
-      {/* Chart 4: Top 12 Car Makes */}
-      <ChartCard title="Top 12 Car Makes in Collection">
+      {/* Chart 4: Top N Car Makes */}
+      <ChartCard title={`Top ${topValuesCount} Car Makes in Collection`}>
         {topMakes.length === 0 ? (
           <p className="text-slate-400 text-sm py-8 text-center">
             No data available
