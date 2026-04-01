@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { items } from "@/db/schema";
+import { items, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import DashboardCharts from "./dashboard-charts";
@@ -28,6 +28,14 @@ export default async function DashboardPage() {
   }
 
   const userId = session.user.id;
+
+  // Fetch user settings
+  const userRecord = await db
+    .select({ months_look_back: users.months_look_back })
+    .from(users)
+    .where(eq(users.id, userId))
+    .then((rows) => rows[0]);
+  const monthsLookBack = userRecord?.months_look_back ?? 12;
 
   // Fetch all items for the user in one query
   const allItems = await db
@@ -57,13 +65,13 @@ export default async function DashboardPage() {
     { label: "On Preorder", value: onPreorder.toLocaleString() },
   ];
 
-  // --- 12-month range ending at current month ---
+  // --- Rolling month range ending at current month ---
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1; // 1–12
 
   const months: { year: number; month: number; label: string }[] = [];
-  for (let i = 11; i >= 0; i--) {
+  for (let i = monthsLookBack - 1; i >= 0; i--) {
     let month = currentMonth - i;
     let year = currentYear;
     if (month <= 0) {
@@ -142,6 +150,7 @@ export default async function DashboardPage() {
         modelCountByMonth={modelCountByMonth}
         topBrands={topBrands}
         topMakes={topMakes}
+        monthsLookBack={monthsLookBack}
       />
     </div>
   );

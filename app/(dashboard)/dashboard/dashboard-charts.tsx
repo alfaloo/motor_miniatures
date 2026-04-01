@@ -24,6 +24,7 @@ interface DashboardChartsProps {
   modelCountByMonth: MonthlyCountData[];
   topBrands: TokenData[];
   topMakes: TokenData[];
+  monthsLookBack: number;
 }
 
 const BLUE = "#2563EB";
@@ -61,11 +62,12 @@ export default function DashboardCharts({
   modelCountByMonth,
   topBrands,
   topMakes,
+  monthsLookBack,
 }: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       {/* Chart 1: Purchase Value Per Month */}
-      <ChartCard title="Purchase Value Per Month (Past 12 Months)">
+      <ChartCard title={`Purchase Value Per Month (Past ${monthsLookBack} Months)`}>
         <ChartContainer
           config={valueChartConfig}
           className="min-h-[220px] w-full"
@@ -101,7 +103,7 @@ export default function DashboardCharts({
       </ChartCard>
 
       {/* Chart 2: Models Purchased Per Month */}
-      <ChartCard title="Models Purchased Per Month (Past 12 Months)">
+      <ChartCard title={`Models Purchased Per Month (Past ${monthsLookBack} Months)`}>
         <ChartContainer
           config={countChartConfig}
           className="min-h-[220px] w-full"
