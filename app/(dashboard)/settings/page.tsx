@@ -17,6 +17,7 @@ export default async function SettingsPage() {
       username: users.username,
       months_look_back: users.months_look_back,
       top_values_count: users.top_values_count,
+      theme: users.theme,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
   const username = user?.username ?? "";
   const monthsLookBack = user?.months_look_back ?? 12;
   const topValuesCount = user?.top_values_count ?? 12;
+  const theme = user?.theme ?? "dark";
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -35,6 +37,7 @@ export default async function SettingsPage() {
         monthsLookBack={monthsLookBack}
         topValuesCount={topValuesCount}
         username={username}
+        theme={theme}
       />
     </div>
   );

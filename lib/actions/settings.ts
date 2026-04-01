@@ -137,6 +137,28 @@ export async function updateGeneralSettings(
   return results;
 }
 
+export async function updateDisplaySettings(theme: string): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (theme !== "dark" && theme !== "light" && theme !== "clock") {
+    return { success: false, error: "Invalid theme value" };
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({ theme })
+      .where(eq(users.id, session.user.id));
+    revalidatePath("/settings");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save display settings" };
+  }
+}
+
 export async function updateUsername(newUsername: string) {
   const session = await auth();
   if (!session) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateGeneralSettings } from "@/lib/actions/settings";
+import { updateGeneralSettings, updateDisplaySettings } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
@@ -10,6 +10,7 @@ interface SettingsFormProps {
   monthsLookBack: number;
   topValuesCount: number;
   username: string;
+  theme: string;
 }
 
 type FieldStatus = "idle" | "success" | "error";
@@ -26,6 +27,7 @@ export default function SettingsForm({
   collectingSinceYear,
   monthsLookBack,
   topValuesCount,
+  theme,
 }: SettingsFormProps) {
   const currentYear = new Date().getFullYear();
 
@@ -41,6 +43,12 @@ export default function SettingsForm({
   const [monthsError, setMonthsError] = useState<string | null>(null);
   const [topValuesStatus, setTopValuesStatus] = useState<FieldStatus>("idle");
   const [topValuesError, setTopValuesError] = useState<string | null>(null);
+
+  // Display panel state
+  const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [isPendingDisplay, startDisplayTransition] = useTransition();
+  const [themeStatus, setThemeStatus] = useState<FieldStatus>("idle");
+  const [themeError, setThemeError] = useState<string | null>(null);
 
   const years: number[] = [];
   for (let y = currentYear; y >= 1900; y--) {
@@ -87,6 +95,34 @@ export default function SettingsForm({
       } else {
         setTopValuesStatus("error");
         setTopValuesError(results.topValuesCount.error);
+      }
+    });
+  }
+
+  function resolveTheme(themeValue: string): "light" | "dark" {
+    if (themeValue === "light") return "light";
+    if (themeValue === "clock") {
+      const hour = new Date().getHours();
+      return hour >= 7 && hour < 19 ? "light" : "dark";
+    }
+    return "dark";
+  }
+
+  function handleDisplaySubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setThemeError(null);
+    setThemeStatus("idle");
+
+    startDisplayTransition(async () => {
+      const result = await updateDisplaySettings(selectedTheme);
+      if (result.success) {
+        setThemeStatus("success");
+        const resolved = resolveTheme(selectedTheme);
+        document.documentElement.setAttribute("data-theme", resolved);
+        document.cookie = `theme-resolved=${resolved};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
+      } else {
+        setThemeStatus("error");
+        setThemeError(result.error ?? "Failed to save display settings");
       }
     });
   }
@@ -179,10 +215,38 @@ export default function SettingsForm({
         </form>
       </div>
 
-      {/* Display Panel (T10) */}
+      {/* Display Panel */}
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Display</h2>
-        <p className="text-sm text-muted-foreground">Display settings coming soon.</p>
+        <form onSubmit={handleDisplaySubmit} className="space-y-5">
+          <div className="space-y-1">
+            <Label htmlFor="colour_theme" className="text-foreground">
+              Colour Theme
+            </Label>
+            <select
+              id="colour_theme"
+              value={selectedTheme}
+              onChange={(e) => {
+                setSelectedTheme(e.target.value);
+                setThemeStatus("idle");
+                setThemeError(null);
+              }}
+              className={`w-48 ${getInputClass(themeStatus)}`}
+            >
+              <option value="dark">Dark Mode</option>
+              <option value="light">Light Mode</option>
+              <option value="clock">Clock Sync</option>
+            </select>
+            {themeError && <p className="text-xs text-red-400">{themeError}</p>}
+            <p className="text-xs text-muted-foreground">
+              Clock Sync applies Light Mode from 07:00–19:00 and Dark Mode at night.
+            </p>
+          </div>
+
+          <Button type="submit" disabled={isPendingDisplay}>
+            {isPendingDisplay ? "Saving..." : "Save Display Settings"}
+          </Button>
+        </form>
       </div>
 
       {/* Account Panel (T11) */}
