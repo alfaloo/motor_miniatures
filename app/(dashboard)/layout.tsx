@@ -26,7 +26,7 @@ export default async function DashboardLayout({
   const userTheme = user?.theme ?? "dark";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-900">
       <ThemeSync userTheme={userTheme} />
       <Navbar username={session.user.username} />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

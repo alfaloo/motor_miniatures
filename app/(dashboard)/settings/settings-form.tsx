@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateGeneralSettings, updateDisplaySettings, updateAccountSettings } from "@/lib/actions/settings";
+import { updateGeneralSettings, updateDisplaySettings, updateUsername, updatePassword } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
@@ -17,7 +17,7 @@ type FieldStatus = "idle" | "success" | "error";
 
 function getInputClass(status: FieldStatus): string {
   const base =
-    "rounded-md border border-slate-600 bg-slate-900 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600";
+    "h-9 rounded-md border border-slate-600 bg-slate-900 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600";
   if (status === "success") return `${base} ring-2 ring-green-500`;
   if (status === "error") return `${base} ring-2 ring-red-500`;
   return base;
@@ -34,8 +34,8 @@ export default function SettingsForm({
 
   // General panel state
   const [selectedYear, setSelectedYear] = useState(collectingSinceYear);
-  const [monthsInput, setMonthsInput] = useState(monthsLookBack);
-  const [topValuesInput, setTopValuesInput] = useState(topValuesCount);
+  const [monthsInput, setMonthsInput] = useState(String(monthsLookBack));
+  const [topValuesInput, setTopValuesInput] = useState(String(topValuesCount));
   const [isPendingGeneral, startGeneralTransition] = useTransition();
 
   const [yearStatus, setYearStatus] = useState<FieldStatus>("idle");
@@ -45,15 +45,17 @@ export default function SettingsForm({
   const [topValuesStatus, setTopValuesStatus] = useState<FieldStatus>("idle");
   const [topValuesError, setTopValuesError] = useState<string | null>(null);
 
-  // Account panel state
+  // Account panel — username state
   const [usernameInput, setUsernameInput] = useState(username);
+  const [isPendingUsername, startUsernameTransition] = useTransition();
+  const [usernameStatus, setUsernameStatus] = useState<FieldStatus>("idle");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  // Account panel — password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isPendingAccount, startAccountTransition] = useTransition();
-
-  const [usernameStatus, setUsernameStatus] = useState<FieldStatus>("idle");
-  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isPendingPassword, startPasswordTransition] = useTransition();
   const [passwordStatus, setPasswordStatus] = useState<FieldStatus>("idle");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordClientError, setPasswordClientError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export default function SettingsForm({
     setTopValuesStatus("idle");
 
     startGeneralTransition(async () => {
-      const results = await updateGeneralSettings(selectedYear, monthsInput, topValuesInput);
+      const results = await updateGeneralSettings(selectedYear, Number(monthsInput), Number(topValuesInput));
 
       // Collecting Since Year
       if (results.collectingSinceYear === "success") {
@@ -141,51 +143,40 @@ export default function SettingsForm({
     });
   }
 
-  function handleAccountSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleUsernameSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setUsernameError(null);
+    setUsernameStatus("idle");
+    startUsernameTransition(async () => {
+      const result = await updateUsername(usernameInput);
+      if (result && "error" in result && result.error) {
+        setUsernameStatus("error");
+        setUsernameError(result.error);
+      } else {
+        setUsernameStatus("success");
+      }
+    });
+  }
+
+  function handlePasswordSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setPasswordError(null);
     setPasswordClientError(null);
-    setUsernameStatus("idle");
     setPasswordStatus("idle");
-
-    // Client-side validation: if any password field is filled but current password is empty
-    const anyPasswordFilled = newPassword || confirmPassword || currentPassword;
-    if (anyPasswordFilled && !currentPassword) {
-      setPasswordClientError("Current password is required to change your password.");
+    if (newPassword !== confirmPassword) {
+      setPasswordClientError("New password and confirm password do not match.");
       return;
     }
-
-    startAccountTransition(async () => {
-      const results = await updateAccountSettings(
-        usernameInput,
-        username,
-        currentPassword,
-        newPassword,
-        confirmPassword
-      );
-
-      // Username feedback
-      if (results.username === "success") {
-        setUsernameStatus("success");
-      } else if (results.username === "unchanged") {
-        setUsernameStatus("idle");
+    startPasswordTransition(async () => {
+      const result = await updatePassword(currentPassword, newPassword);
+      if (result && "error" in result && result.error) {
+        setPasswordStatus("error");
+        setPasswordError(result.error);
       } else {
-        setUsernameStatus("error");
-        setUsernameError(results.username.error);
-      }
-
-      // Password feedback
-      if (results.password === "success") {
         setPasswordStatus("success");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-      } else if (results.password === "unchanged") {
-        setPasswordStatus("idle");
-      } else {
-        setPasswordStatus("error");
-        setPasswordError(results.password.error);
       }
     });
   }
@@ -197,7 +188,7 @@ export default function SettingsForm({
         <h2 className="text-lg font-semibold text-foreground mb-4">General</h2>
         <form onSubmit={handleGeneralSubmit} className="space-y-5">
           {/* Collecting Since Year */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="collecting_since_year" className="text-foreground">
               Collecting Since Year
             </Label>
@@ -209,7 +200,7 @@ export default function SettingsForm({
                 setYearStatus("idle");
                 setYearError(null);
               }}
-              className={`w-32 ${getInputClass(yearStatus)}`}
+              className={`w-full ${getInputClass(yearStatus)}`}
             >
               {years.map((year) => (
                 <option key={year} value={year}>
@@ -225,7 +216,7 @@ export default function SettingsForm({
           </div>
 
           {/* Months to Look Back */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="months_look_back" className="text-foreground">
               Months to Look Back
             </Label>
@@ -236,11 +227,11 @@ export default function SettingsForm({
               max={24}
               value={monthsInput}
               onChange={(e) => {
-                setMonthsInput(Number(e.target.value));
+                setMonthsInput(e.target.value);
                 setMonthsStatus("idle");
                 setMonthsError(null);
               }}
-              className={`w-32 ${getInputClass(monthsStatus)}`}
+              className={`w-full ${getInputClass(monthsStatus)}`}
             />
             {monthsError && <p className="text-xs text-red-400">{monthsError}</p>}
             <p className="text-xs text-muted-foreground">
@@ -249,7 +240,7 @@ export default function SettingsForm({
           </div>
 
           {/* Top Values to Display */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="top_values_count" className="text-foreground">
               Top Values to Display
             </Label>
@@ -260,11 +251,11 @@ export default function SettingsForm({
               max={24}
               value={topValuesInput}
               onChange={(e) => {
-                setTopValuesInput(Number(e.target.value));
+                setTopValuesInput(e.target.value);
                 setTopValuesStatus("idle");
                 setTopValuesError(null);
               }}
-              className={`w-32 ${getInputClass(topValuesStatus)}`}
+              className={`w-full ${getInputClass(topValuesStatus)}`}
             />
             {topValuesError && <p className="text-xs text-red-400">{topValuesError}</p>}
             <p className="text-xs text-muted-foreground">
@@ -282,7 +273,7 @@ export default function SettingsForm({
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Display</h2>
         <form onSubmit={handleDisplaySubmit} className="space-y-5">
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="colour_theme" className="text-foreground">
               Colour Theme
             </Label>
@@ -294,7 +285,7 @@ export default function SettingsForm({
                 setThemeStatus("idle");
                 setThemeError(null);
               }}
-              className={`w-48 ${getInputClass(themeStatus)}`}
+              className={`w-full ${getInputClass(themeStatus)}`}
             >
               <option value="dark">Dark Mode</option>
               <option value="light">Light Mode</option>
@@ -315,89 +306,88 @@ export default function SettingsForm({
       {/* Account Panel */}
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Account</h2>
-        <form onSubmit={handleAccountSubmit} className="space-y-5">
-          {/* Username */}
-          <div className="space-y-1">
-            <Label htmlFor="account_username" className="text-foreground">
-              Username
-            </Label>
-            <input
-              id="account_username"
-              type="text"
-              value={usernameInput}
-              onChange={(e) => {
-                setUsernameInput(e.target.value);
-                setUsernameStatus("idle");
-                setUsernameError(null);
-              }}
-              className={`w-64 ${getInputClass(usernameStatus)}`}
-            />
-            {usernameError && <p className="text-xs text-red-400">{usernameError}</p>}
-          </div>
+        <div className="space-y-8">
+          {/* Username form */}
+          <form onSubmit={handleUsernameSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="account_username" className="text-foreground">
+                Username
+              </Label>
+              <input
+                id="account_username"
+                type="text"
+                value={usernameInput}
+                onChange={(e) => {
+                  setUsernameInput(e.target.value);
+                  setUsernameStatus("idle");
+                  setUsernameError(null);
+                }}
+                className={`w-full ${getInputClass(usernameStatus)}`}
+                maxLength={32}
+              />
+              {usernameError && <p className="text-xs text-red-400">{usernameError}</p>}
+              <p className="text-xs text-muted-foreground">
+                Your unique username used to log in to the app.
+              </p>
+            </div>
+            <Button type="submit" disabled={isPendingUsername}>
+              {isPendingUsername ? "Saving..." : "Save Username"}
+            </Button>
+          </form>
 
-          {/* Current Password */}
-          <div className="space-y-1">
-            <Label htmlFor="current_password" className="text-foreground">
-              Current Password
-            </Label>
-            <input
-              id="current_password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                setPasswordStatus("idle");
-                setPasswordError(null);
-                setPasswordClientError(null);
-              }}
-              className={`w-64 ${getInputClass(passwordStatus)}`}
-            />
-          </div>
-
-          {/* New Password */}
-          <div className="space-y-1">
-            <Label htmlFor="new_password" className="text-foreground">
-              New Password
-            </Label>
-            <input
-              id="new_password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                setPasswordStatus("idle");
-                setPasswordError(null);
-                setPasswordClientError(null);
-              }}
-              className={`w-64 ${getInputClass(passwordStatus)}`}
-            />
-          </div>
-
-          {/* Confirm New Password */}
-          <div className="space-y-1">
-            <Label htmlFor="confirm_password" className="text-foreground">
-              Confirm New Password
-            </Label>
-            <input
-              id="confirm_password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setPasswordStatus("idle");
-                setPasswordError(null);
-                setPasswordClientError(null);
-              }}
-              className={`w-64 ${getInputClass(passwordStatus)}`}
-            />
-            {passwordClientError && <p className="text-xs text-red-400">{passwordClientError}</p>}
-            {passwordError && <p className="text-xs text-red-400">{passwordError}</p>}
-          </div>
-
-          <Button type="submit" disabled={isPendingAccount}>
-            {isPendingAccount ? "Saving..." : "Save Account Settings"}
-          </Button>
-        </form>
+          {/* Password form */}
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current_password" className="text-foreground">
+                Change Password
+              </Label>
+              <input
+                id="current_password"
+                type="password"
+                placeholder="Current password"
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setPasswordStatus("idle");
+                  setPasswordError(null);
+                  setPasswordClientError(null);
+                }}
+                className={`w-full ${getInputClass(passwordStatus)}`}
+              />
+              <input
+                id="new_password"
+                type="password"
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setPasswordStatus("idle");
+                  setPasswordError(null);
+                  setPasswordClientError(null);
+                }}
+                className={`w-full ${getInputClass(passwordStatus)}`}
+              />
+              <input
+                id="confirm_password"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordStatus("idle");
+                  setPasswordError(null);
+                  setPasswordClientError(null);
+                }}
+                className={`w-full ${getInputClass(passwordStatus)}`}
+              />
+              {passwordClientError && <p className="text-xs text-red-400">{passwordClientError}</p>}
+              {passwordError && <p className="text-xs text-red-400">{passwordError}</p>}
+            </div>
+            <Button type="submit" disabled={isPendingPassword}>
+              {isPendingPassword ? "Saving..." : "Save Password"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

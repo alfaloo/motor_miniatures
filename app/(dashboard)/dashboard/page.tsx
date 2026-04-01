@@ -83,8 +83,17 @@ export default async function DashboardPage() {
     months.push({ year, month, label });
   }
 
+  // Trim leading months with no purchases so the charts show only from the
+  // first month that has activity (min of setting vs actual data range).
+  const firstActiveIdx = months.findIndex(({ year, month }) =>
+    allItems.some(
+      (item) => item.purchase_year === year && item.purchase_month === month
+    )
+  );
+  const activeMonths = firstActiveIdx === -1 ? [] : months.slice(firstActiveIdx);
+
   // Chart 1: Purchase Value Per Month
-  const purchaseValueByMonth = months.map(({ year, month, label }) => {
+  const purchaseValueByMonth = activeMonths.map(({ year, month, label }) => {
     const value = allItems
       .filter(
         (item) => item.purchase_year === year && item.purchase_month === month
@@ -94,7 +103,7 @@ export default async function DashboardPage() {
   });
 
   // Chart 2: Models Purchased Per Month
-  const modelCountByMonth = months.map(({ year, month, label }) => {
+  const modelCountByMonth = activeMonths.map(({ year, month, label }) => {
     const count = allItems.filter(
       (item) => item.purchase_year === year && item.purchase_month === month
     ).length;
