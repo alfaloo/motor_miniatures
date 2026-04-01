@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { items } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc, sql } from "drizzle-orm";
 import { CollectionGrid } from "@/components/collection-grid";
 import { ItemCardSkeletonGrid } from "@/components/item-card-skeleton";
 import { ToastOnMount } from "@/components/toast-on-mount";
@@ -23,15 +23,52 @@ async function CollectionItems({
   page: number;
   searchParams: Record<string, string>;
 }) {
+  const sortParam = searchParams.sort;
+  const dirParam = searchParams.dir;
+  const isAsc = dirParam === "asc";
+  const dirFn = isAsc ? asc : desc;
+
+  const defaultTiebreak = [
+    desc(items.purchase_year),
+    desc(items.purchase_month),
+    desc(items.created_at),
+  ] as const;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let orderBy: any[];
+  if (!sortParam || sortParam === "purchase_date") {
+    orderBy = [
+      dirFn(items.purchase_year),
+      dirFn(items.purchase_month),
+      dirFn(items.created_at),
+    ];
+  } else if (sortParam === "purchase_price") {
+    orderBy = [dirFn(items.purchase_price), ...defaultTiebreak];
+  } else {
+    const nullableColMap: Record<string, typeof items.sold_price> = {
+      sold_price: items.sold_price,
+      serial_number: items.serial_number as unknown as typeof items.sold_price,
+      production_count:
+        items.production_count as unknown as typeof items.sold_price,
+      grade: items.grade as unknown as typeof items.sold_price,
+    };
+    const col = nullableColMap[sortParam];
+    if (col) {
+      orderBy = [
+        sql`CASE WHEN ${col} IS NULL THEN 1 ELSE 0 END`,
+        dirFn(col),
+        ...defaultTiebreak,
+      ];
+    } else {
+      orderBy = [...defaultTiebreak];
+    }
+  }
+
   const allItems = await db
     .select()
     .from(items)
     .where(eq(items.user_id, userId))
-    .orderBy(
-      desc(items.purchase_year),
-      desc(items.purchase_month),
-      desc(items.created_at)
-    );
+    .orderBy(...orderBy);
 
   const totalItems = allItems.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
