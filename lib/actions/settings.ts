@@ -233,3 +233,94 @@ export async function updatePassword(currentPassword: string, newPassword: strin
   revalidatePath("/settings");
   return { success: true };
 }
+
+export async function updateAccountSettings(
+  newUsername: string,
+  currentUsername: string,
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<{
+  username: FieldResult;
+  password: FieldResult;
+}> {
+  const session = await auth();
+  if (!session) {
+    redirect("/login");
+  }
+
+  const results: { username: FieldResult; password: FieldResult } = {
+    username: "unchanged",
+    password: "unchanged",
+  };
+
+  // Username update
+  const trimmedUsername = newUsername.trim();
+  if (trimmedUsername !== currentUsername) {
+    if (!trimmedUsername) {
+      results.username = { error: "Username cannot be empty" };
+    } else if (trimmedUsername.length > 32) {
+      results.username = { error: "Username must be 32 characters or fewer" };
+    } else {
+      try {
+        const existing = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.username, trimmedUsername), ne(users.id, session.user.id)))
+          .limit(1);
+
+        if (existing.length > 0) {
+          results.username = { error: "That username is already taken. Please choose another." };
+        } else {
+          await db
+            .update(users)
+            .set({ username: trimmedUsername })
+            .where(eq(users.id, session.user.id));
+          results.username = "success";
+        }
+      } catch {
+        results.username = { error: "Failed to save username" };
+      }
+    }
+  }
+
+  // Password update — only if new password and confirm are non-empty and match
+  if (newPassword && confirmPassword) {
+    if (newPassword !== confirmPassword) {
+      results.password = { error: "New password and confirm password do not match" };
+    } else if (newPassword.length < 8) {
+      results.password = { error: "New password must be at least 8 characters" };
+    } else if (!currentPassword) {
+      results.password = { error: "Current password is required to change password" };
+    } else {
+      try {
+        const [user] = await db
+          .select({ password: users.password })
+          .from(users)
+          .where(eq(users.id, session.user.id))
+          .limit(1);
+
+        if (!user) {
+          results.password = { error: "User not found" };
+        } else {
+          const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+          if (!passwordMatch) {
+            results.password = { error: "Current password is incorrect" };
+          } else {
+            const hashed = await bcrypt.hash(newPassword, 10);
+            await db
+              .update(users)
+              .set({ password: hashed })
+              .where(eq(users.id, session.user.id));
+            results.password = "success";
+          }
+        }
+      } catch {
+        results.password = { error: "Failed to save password" };
+      }
+    }
+  }
+
+  revalidatePath("/settings");
+  return results;
+}

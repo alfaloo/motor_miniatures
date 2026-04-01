@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateGeneralSettings, updateDisplaySettings } from "@/lib/actions/settings";
+import { updateGeneralSettings, updateDisplaySettings, updateAccountSettings } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
@@ -27,6 +27,7 @@ export default function SettingsForm({
   collectingSinceYear,
   monthsLookBack,
   topValuesCount,
+  username,
   theme,
 }: SettingsFormProps) {
   const currentYear = new Date().getFullYear();
@@ -43,6 +44,19 @@ export default function SettingsForm({
   const [monthsError, setMonthsError] = useState<string | null>(null);
   const [topValuesStatus, setTopValuesStatus] = useState<FieldStatus>("idle");
   const [topValuesError, setTopValuesError] = useState<string | null>(null);
+
+  // Account panel state
+  const [usernameInput, setUsernameInput] = useState(username);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPendingAccount, startAccountTransition] = useTransition();
+
+  const [usernameStatus, setUsernameStatus] = useState<FieldStatus>("idle");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [passwordStatus, setPasswordStatus] = useState<FieldStatus>("idle");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordClientError, setPasswordClientError] = useState<string | null>(null);
 
   // Display panel state
   const [selectedTheme, setSelectedTheme] = useState(theme);
@@ -123,6 +137,55 @@ export default function SettingsForm({
       } else {
         setThemeStatus("error");
         setThemeError(result.error ?? "Failed to save display settings");
+      }
+    });
+  }
+
+  function handleAccountSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setUsernameError(null);
+    setPasswordError(null);
+    setPasswordClientError(null);
+    setUsernameStatus("idle");
+    setPasswordStatus("idle");
+
+    // Client-side validation: if any password field is filled but current password is empty
+    const anyPasswordFilled = newPassword || confirmPassword || currentPassword;
+    if (anyPasswordFilled && !currentPassword) {
+      setPasswordClientError("Current password is required to change your password.");
+      return;
+    }
+
+    startAccountTransition(async () => {
+      const results = await updateAccountSettings(
+        usernameInput,
+        username,
+        currentPassword,
+        newPassword,
+        confirmPassword
+      );
+
+      // Username feedback
+      if (results.username === "success") {
+        setUsernameStatus("success");
+      } else if (results.username === "unchanged") {
+        setUsernameStatus("idle");
+      } else {
+        setUsernameStatus("error");
+        setUsernameError(results.username.error);
+      }
+
+      // Password feedback
+      if (results.password === "success") {
+        setPasswordStatus("success");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else if (results.password === "unchanged") {
+        setPasswordStatus("idle");
+      } else {
+        setPasswordStatus("error");
+        setPasswordError(results.password.error);
       }
     });
   }
@@ -249,10 +312,92 @@ export default function SettingsForm({
         </form>
       </div>
 
-      {/* Account Panel (T11) */}
+      {/* Account Panel */}
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Account</h2>
-        <p className="text-sm text-muted-foreground">Account settings coming soon.</p>
+        <form onSubmit={handleAccountSubmit} className="space-y-5">
+          {/* Username */}
+          <div className="space-y-1">
+            <Label htmlFor="account_username" className="text-foreground">
+              Username
+            </Label>
+            <input
+              id="account_username"
+              type="text"
+              value={usernameInput}
+              onChange={(e) => {
+                setUsernameInput(e.target.value);
+                setUsernameStatus("idle");
+                setUsernameError(null);
+              }}
+              className={`w-64 ${getInputClass(usernameStatus)}`}
+            />
+            {usernameError && <p className="text-xs text-red-400">{usernameError}</p>}
+          </div>
+
+          {/* Current Password */}
+          <div className="space-y-1">
+            <Label htmlFor="current_password" className="text-foreground">
+              Current Password
+            </Label>
+            <input
+              id="current_password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                setPasswordStatus("idle");
+                setPasswordError(null);
+                setPasswordClientError(null);
+              }}
+              className={`w-64 ${getInputClass(passwordStatus)}`}
+            />
+          </div>
+
+          {/* New Password */}
+          <div className="space-y-1">
+            <Label htmlFor="new_password" className="text-foreground">
+              New Password
+            </Label>
+            <input
+              id="new_password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setPasswordStatus("idle");
+                setPasswordError(null);
+                setPasswordClientError(null);
+              }}
+              className={`w-64 ${getInputClass(passwordStatus)}`}
+            />
+          </div>
+
+          {/* Confirm New Password */}
+          <div className="space-y-1">
+            <Label htmlFor="confirm_password" className="text-foreground">
+              Confirm New Password
+            </Label>
+            <input
+              id="confirm_password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setPasswordStatus("idle");
+                setPasswordError(null);
+                setPasswordClientError(null);
+              }}
+              className={`w-64 ${getInputClass(passwordStatus)}`}
+            />
+            {passwordClientError && <p className="text-xs text-red-400">{passwordClientError}</p>}
+            {passwordError && <p className="text-xs text-red-400">{passwordError}</p>}
+          </div>
+
+          <Button type="submit" disabled={isPendingAccount}>
+            {isPendingAccount ? "Saving..." : "Save Account Settings"}
+          </Button>
+        </form>
       </div>
     </div>
   );
