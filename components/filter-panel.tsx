@@ -510,7 +510,7 @@ export function FilterPanel({
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Filter className="h-4 w-4 mr-2" />
-          Apply Filters
+          Apply
         </Button>
         <Button
           type="button"
@@ -519,7 +519,7 @@ export function FilterPanel({
           className="border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-200"
         >
           <X className="h-4 w-4 mr-2" />
-          Clear Filters
+          Clear
         </Button>
       </div>
     </div>

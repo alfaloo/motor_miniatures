@@ -138,28 +138,20 @@ export function CollectionPageClient({
 
       {/* Summary bar — always visible above filter panel when filters are active */}
       {summaryData && (
-        <div className="flex flex-wrap gap-6 p-4 bg-card rounded-lg border border-border text-sm">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-wrap gap-6 items-center">
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">
-              Matched Items
-            </span>
-            <span className="text-lg font-semibold">{summaryData.matchedCount}</span>
+            <span className="text-xs text-slate-400 uppercase tracking-wide">Matched Items</span>
+            <span className="text-2xl font-bold text-white">{summaryData.matchedCount}</span>
           </div>
+          <div className="w-px h-10 bg-slate-700 hidden sm:block" />
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">
-              Total Purchase Value
-            </span>
-            <span className="text-lg font-semibold">
-              ${summaryData.totalPurchaseValue.toLocaleString()}
-            </span>
+            <span className="text-xs text-slate-400 uppercase tracking-wide">Total Purchase Value</span>
+            <span className="text-2xl font-bold text-blue-400">${summaryData.totalPurchaseValue.toLocaleString()}</span>
           </div>
+          <div className="w-px h-10 bg-slate-700 hidden sm:block" />
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">
-              Total Sale Value
-            </span>
-            <span className="text-lg font-semibold">
-              ${summaryData.totalSoldValue.toLocaleString()}
-            </span>
+            <span className="text-xs text-slate-400 uppercase tracking-wide">Total Sale Value</span>
+            <span className="text-2xl font-bold text-green-400">${summaryData.totalSoldValue.toLocaleString()}</span>
           </div>
         </div>
       )}

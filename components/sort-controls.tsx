@@ -69,7 +69,6 @@ export function SortControls({
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1">
-        <span className="text-sm text-slate-400 whitespace-nowrap">Sort:</span>
         <Select value={currentSort} onValueChange={handleSortChange}>
           <SelectTrigger className="h-9 w-[160px] bg-slate-800 border-slate-700 text-slate-200 text-sm">
             <SelectValue />
