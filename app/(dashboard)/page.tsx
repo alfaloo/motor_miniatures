@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { items } from "@/db/schema";
-import { eq, desc, asc, sql } from "drizzle-orm";
+import { and, eq, desc, asc, sql, ilike, isNull } from "drizzle-orm";
 import { CollectionGrid } from "@/components/collection-grid";
 import { ItemCardSkeletonGrid } from "@/components/item-card-skeleton";
 import { ToastOnMount } from "@/components/toast-on-mount";
@@ -65,19 +65,107 @@ async function CollectionItems({
     }
   }
 
+  // --- Filter conditions ---
+  const FILTER_KEYS = [
+    "brand", "make", "model", "variant", "scale", "grade",
+    "serial_number", "production_count", "purchase_platform", "purchase_price",
+    "purchase_year", "purchase_month", "is_preorder", "received_year", "received_month",
+    "is_sold", "sold_price", "sold_platform", "sold_year", "sold_month",
+  ];
+
+  function isActiveFilter(val: string | undefined): boolean {
+    return Boolean(val && val !== "" && val !== "any");
+  }
+
+  const hasActiveFilter = FILTER_KEYS.some((k) => isActiveFilter(searchParams[k]));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const whereConditions: any[] = [eq(items.user_id, userId)];
+
+  const fp = searchParams;
+
+  if (isActiveFilter(fp.brand)) whereConditions.push(ilike(items.brand, `%${fp.brand}%`));
+  if (isActiveFilter(fp.make)) whereConditions.push(ilike(items.make, `%${fp.make}%`));
+  if (isActiveFilter(fp.model)) whereConditions.push(ilike(items.model, `%${fp.model}%`));
+  if (isActiveFilter(fp.variant)) whereConditions.push(ilike(items.variant, `%${fp.variant}%`));
+  if (isActiveFilter(fp.scale)) whereConditions.push(eq(items.scale, fp.scale!));
+  if (isActiveFilter(fp.grade)) {
+    if (fp.grade === "ungraded") {
+      whereConditions.push(isNull(items.grade));
+    } else {
+      const g = parseInt(fp.grade!, 10);
+      if (!isNaN(g)) whereConditions.push(eq(items.grade, g));
+    }
+  }
+  if (isActiveFilter(fp.serial_number)) {
+    const v = parseInt(fp.serial_number!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.serial_number, v));
+  }
+  if (isActiveFilter(fp.production_count)) {
+    const v = parseInt(fp.production_count!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.production_count, v));
+  }
+  if (isActiveFilter(fp.purchase_platform)) whereConditions.push(ilike(items.purchase_platform, `%${fp.purchase_platform}%`));
+  if (isActiveFilter(fp.purchase_price)) {
+    const v = parseInt(fp.purchase_price!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.purchase_price, v));
+  }
+  if (isActiveFilter(fp.purchase_year)) {
+    const v = parseInt(fp.purchase_year!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.purchase_year, v));
+  }
+  if (isActiveFilter(fp.purchase_month)) {
+    const v = parseInt(fp.purchase_month!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.purchase_month, v));
+  }
+  if (isActiveFilter(fp.is_preorder)) {
+    whereConditions.push(eq(items.is_preorder, fp.is_preorder === "yes"));
+  }
+  if (isActiveFilter(fp.received_year)) {
+    const v = parseInt(fp.received_year!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.received_year, v));
+  }
+  if (isActiveFilter(fp.received_month)) {
+    const v = parseInt(fp.received_month!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.received_month, v));
+  }
+  if (isActiveFilter(fp.is_sold)) {
+    whereConditions.push(eq(items.is_sold, fp.is_sold === "yes"));
+  }
+  if (isActiveFilter(fp.sold_price)) {
+    const v = parseInt(fp.sold_price!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.sold_price, v));
+  }
+  if (isActiveFilter(fp.sold_platform)) whereConditions.push(ilike(items.sold_platform, `%${fp.sold_platform}%`));
+  if (isActiveFilter(fp.sold_year)) {
+    const v = parseInt(fp.sold_year!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.sold_year, v));
+  }
+  if (isActiveFilter(fp.sold_month)) {
+    const v = parseInt(fp.sold_month!, 10);
+    if (!isNaN(v)) whereConditions.push(eq(items.sold_month, v));
+  }
+
   const allItems = await db
     .select()
     .from(items)
-    .where(eq(items.user_id, userId))
+    .where(and(...whereConditions))
     .orderBy(...orderBy);
 
-  const totalItems = allItems.length;
+  // Aggregate values over the full filtered result set
+  const matchedCount = allItems.length;
+  const totalPurchaseValue = allItems.reduce((sum, item) => sum + item.purchase_price, 0);
+  const totalSoldValue = allItems
+    .filter((item) => item.is_sold)
+    .reduce((sum, item) => sum + (item.sold_price ?? 0), 0);
+
+  const totalItems = matchedCount;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
   const currentPage = Math.min(page, Math.max(1, totalPages));
   const start = (currentPage - 1) * PAGE_SIZE;
   const pageItems = allItems.slice(start, start + PAGE_SIZE);
 
-  if (totalItems === 0) {
+  if (totalItems === 0 && !hasActiveFilter) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <PackageOpen className="h-16 w-16 text-slate-600" />
@@ -99,16 +187,43 @@ async function CollectionItems({
 
   return (
     <>
-      <p className="text-sm text-slate-400">
-        {totalItems} {totalItems === 1 ? "item" : "items"}
-      </p>
-      <CollectionGrid items={pageItems} />
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          searchParams={searchParams}
-        />
+      {hasActiveFilter && (
+        <div className="flex flex-wrap gap-6 p-4 bg-card rounded-lg border border-border text-sm" data-summary-bar>
+          <div className="flex flex-col">
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Matched Items</span>
+            <span className="text-lg font-semibold">{matchedCount}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Total Purchase Value</span>
+            <span className="text-lg font-semibold">${totalPurchaseValue.toLocaleString()}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Total Sale Value</span>
+            <span className="text-lg font-semibold">${totalSoldValue.toLocaleString()}</span>
+          </div>
+        </div>
+      )}
+      {!hasActiveFilter && (
+        <p className="text-sm text-slate-400">
+          {totalItems} {totalItems === 1 ? "item" : "items"}
+        </p>
+      )}
+      {totalItems === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+          <PackageOpen className="h-16 w-16 text-slate-600" />
+          <p className="text-slate-400">No items match your current filters.</p>
+        </div>
+      ) : (
+        <>
+          <CollectionGrid items={pageItems} />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              searchParams={searchParams}
+            />
+          )}
+        </>
       )}
     </>
   );
