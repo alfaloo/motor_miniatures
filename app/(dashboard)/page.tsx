@@ -10,6 +10,7 @@ import { ItemCardSkeletonGrid } from "@/components/item-card-skeleton";
 import { ToastOnMount } from "@/components/toast-on-mount";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
+import { SortControls } from "@/components/sort-controls";
 import { Plus, PackageOpen } from "lucide-react";
 
 const PAGE_SIZE = 12;
@@ -126,19 +127,29 @@ export default async function CollectionPage({
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
 
+  const sortParam = params.sort ?? "purchase_date";
+  const dirParam = params.dir ?? "desc";
+
   return (
     <div className="space-y-6">
       <ToastOnMount toastKey={params.toast} />
 
       {/* Header row */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold text-white">My Collection</h1>
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Link href="/items/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <SortControls
+            currentSort={sortParam}
+            currentDir={dirParam}
+            searchParams={params}
+          />
+          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Link href="/items/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Suspense fallback={<ItemCardSkeletonGrid />}>
