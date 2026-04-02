@@ -61,14 +61,18 @@ export default async function EditItemPage({
     sold_platform: item.sold_platform ?? undefined,
     sold_year: item.sold_year ?? undefined,
     sold_month: item.sold_month ?? undefined,
+    is_wishlist: item.is_wishlist,
   };
 
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">
-          Collection
+        <Link
+          href={item.is_wishlist ? "/wishlist" : "/"}
+          className="hover:text-foreground transition-colors"
+        >
+          {item.is_wishlist ? "Wishlist" : "Collection"}
         </Link>
         <ChevronRight className="h-4 w-4" />
         <Link
