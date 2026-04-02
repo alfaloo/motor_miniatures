@@ -38,6 +38,7 @@ interface ItemFormProps {
   collectingSinceYear: number;
   initialData?: Partial<ItemFormData>;
   itemId?: string;
+  isWishlist?: boolean;
 }
 
 function getYearOptions(collectingSinceYear: number): number[] {
@@ -49,7 +50,7 @@ function getYearOptions(collectingSinceYear: number): number[] {
   return years;
 }
 
-export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormProps) {
+export function ItemForm({ collectingSinceYear, initialData, itemId, isWishlist }: ItemFormProps) {
   const [isPreorder, setIsPreorder] = useState(initialData?.is_preorder ?? false);
   const [isSold, setIsSold] = useState(initialData?.is_sold ?? false);
 
@@ -82,6 +83,7 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
       sold_platform: initialData?.sold_platform ?? "",
       sold_year: initialData?.sold_year ?? undefined,
       sold_month: initialData?.sold_month ?? undefined,
+      is_wishlist: initialData?.is_wishlist ?? isWishlist ?? false,
     },
   });
 
