@@ -31,9 +31,10 @@ export function extractActiveFilters(searchParams: Record<string, string>): Filt
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildItemWhereConditions(searchParams: Record<string, string>, userId: string): any[] {
+export function buildItemWhereConditions(searchParams: Record<string, string>, userId: string, isWishlist?: boolean): any[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const conditions: any[] = [eq(items.user_id, userId)];
+  if (isWishlist !== undefined) conditions.push(eq(items.is_wishlist, isWishlist));
   const fp = searchParams;
 
   if (isActiveFilter(fp.brand)) conditions.push(ilike(items.brand, `%${fp.brand}%`));

@@ -70,7 +70,7 @@ async function CollectionItems({
     }
   }
 
-  const whereConditions = buildItemWhereConditions(searchParams, userId);
+  const whereConditions = buildItemWhereConditions(searchParams, userId, false);
   const hasFilter = hasActiveFilters(searchParams);
 
   const allItems = await db
@@ -169,7 +169,7 @@ export default async function CollectionPage({
   } | null = null;
 
   if (filterActive) {
-    const whereConditions = buildItemWhereConditions(params, session.user.id);
+    const whereConditions = buildItemWhereConditions(params, session.user.id, false);
     const [agg] = await db
       .select({
         count: sql<number>`count(*)::int`,
