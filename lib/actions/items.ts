@@ -43,10 +43,13 @@ export async function createItem(formData: ItemFormData) {
     sold_platform: data.sold_platform ?? null,
     sold_year: data.sold_year ?? null,
     sold_month: data.sold_month ?? null,
+    is_wishlist: data.is_wishlist,
   });
 
   revalidatePath("/");
-  redirect("/?toast=item_created");
+  revalidatePath("/wishlist");
+  const redirectPath = data.is_wishlist ? "/wishlist?toast=item_created" : "/?toast=item_created";
+  redirect(redirectPath);
 }
 
 export async function updateItem(id: string, formData: ItemFormData) {
@@ -72,6 +75,8 @@ export async function updateItem(id: string, formData: ItemFormData) {
 
   const data = result.data;
 
+  const isWishlist = existing[0].is_wishlist;
+
   await db
     .update(items)
     .set({
@@ -95,12 +100,15 @@ export async function updateItem(id: string, formData: ItemFormData) {
       sold_platform: data.sold_platform ?? null,
       sold_year: data.sold_year ?? null,
       sold_month: data.sold_month ?? null,
+      is_wishlist: isWishlist,
     })
     .where(eq(items.id, id));
 
   revalidatePath("/");
+  revalidatePath("/wishlist");
   revalidatePath("/items/[id]", "page");
-  redirect(`/items/${id}?toast=item_updated`);
+  const redirectPath = isWishlist ? `/wishlist?toast=item_updated` : `/?toast=item_updated`;
+  redirect(redirectPath);
 }
 
 export async function deleteItem(id: string) {
