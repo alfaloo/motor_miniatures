@@ -23,9 +23,10 @@ type ItemLike = {
 
 interface CollectionGridProps {
   items: ItemLike[];
+  onAcquire?: (id: string) => void;
 }
 
-export function CollectionGrid({ items }: CollectionGridProps) {
+export function CollectionGrid({ items, onAcquire }: CollectionGridProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [optimisticItems, removeOptimistically] = useOptimistic(
@@ -51,7 +52,7 @@ export function CollectionGrid({ items }: CollectionGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {optimisticItems.map((item) => (
-        <ItemCard key={item.id} item={item} onDelete={handleDelete} />
+        <ItemCard key={item.id} item={item} onDelete={handleDelete} onAcquire={onAcquire} />
       ))}
     </div>
   );
