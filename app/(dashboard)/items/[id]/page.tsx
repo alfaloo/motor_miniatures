@@ -78,8 +78,8 @@ export default async function ViewItemPage({
 
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">
-          Collection
+        <Link href={item.is_wishlist ? "/wishlist" : "/"} className="hover:text-foreground transition-colors">
+          {item.is_wishlist ? "Wishlist" : "Collection"}
         </Link>
         <ChevronRight className="h-4 w-4" />
         <span className="text-foreground">
