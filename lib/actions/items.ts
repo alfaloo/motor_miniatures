@@ -111,6 +111,32 @@ export async function updateItem(id: string, formData: ItemFormData) {
   redirect(redirectPath);
 }
 
+export async function acquireItem(itemId: string) {
+  const session = await auth();
+  if (!session) {
+    redirect("/login");
+  }
+
+  const item = await db
+    .select()
+    .from(items)
+    .where(and(eq(items.id, itemId), eq(items.user_id, session.user.id)))
+    .limit(1);
+
+  if (!item[0]) {
+    return { error: "Item not found or access denied" };
+  }
+
+  await db
+    .update(items)
+    .set({ is_wishlist: false })
+    .where(and(eq(items.id, itemId), eq(items.user_id, session.user.id)));
+
+  revalidatePath("/");
+  revalidatePath("/wishlist");
+  return { success: true };
+}
+
 export async function deleteItem(id: string) {
   const session = await auth();
   if (!session) {
