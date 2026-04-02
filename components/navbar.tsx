@@ -13,6 +13,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ export function Navbar({ username }: NavbarProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-background border-border w-64">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <nav className="flex flex-col gap-1 mt-6">
                   {navLinks.map((link) => (
                     <Link

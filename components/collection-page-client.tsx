@@ -108,31 +108,33 @@ export function CollectionPageClient({
       {/* Action bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold text-foreground">My Collection</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <SortControls
             currentSort={sortParam}
             currentDir={dirParam}
             searchParams={searchParams}
           />
-          <Button
-            variant="outline"
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="h-9 bg-card border-border text-foreground hover:bg-secondary"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-            {isOpen ? (
-              <ChevronUp className="h-4 w-4 ml-2" />
-            ) : (
-              <ChevronDown className="h-4 w-4 ml-2" />
-            )}
-          </Button>
-          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Link href="/items/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Link>
-          </Button>
+          <div className="flex flex-1 items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="flex-1 h-9 bg-card border-border text-foreground hover:bg-secondary"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filter</span>
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+            <Button asChild className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white">
+              <Link href="/items/new">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Item</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
