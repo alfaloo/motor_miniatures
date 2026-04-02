@@ -41,6 +41,7 @@ export const itemSchema = z
     is_preorder: z.boolean(),
     received_year: z.number().int().optional().nullable(),
     received_month: z.number().int().optional().nullable(),
+    is_wishlist: z.boolean().default(false),
     is_sold: z.boolean(),
     sold_price: z.number().int().positive().optional().nullable(),
     sold_platform: z.string().optional().nullable(),
