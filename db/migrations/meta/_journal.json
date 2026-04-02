@@ -15,6 +15,13 @@
       "when": 1775040151389,
       "tag": "0001_smart_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775115937225,
+      "tag": "0002_yielding_eternity",
+      "breakpoints": true
     }
   ]
 }
