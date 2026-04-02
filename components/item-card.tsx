@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -41,6 +41,7 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, onDelete }: ItemCardProps) {
+  const router = useRouter();
   const purchasedLabel = `${MONTHS[item.purchase_month - 1]} ${item.purchase_year}`;
   const showPreorder = item.is_preorder && item.received_year === null;
 
@@ -51,7 +52,10 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card hover:border-blue-500 transition p-4 flex flex-col gap-3">
+    <div
+      className="rounded-xl border border-border bg-card hover:border-blue-500 transition p-4 flex flex-col gap-3 cursor-pointer"
+      onClick={() => router.push(`/items/${item.id}`)}
+    >
       {/* Top row: brand + scale */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium text-foreground">{item.brand}</span>
@@ -102,17 +106,14 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
 
       {/* Action row */}
       <div className="flex items-center gap-2 pt-1 mt-auto">
-        <Button asChild variant="outline" size="sm" className="flex-1 border-border bg-secondary hover:bg-accent text-foreground text-xs h-8">
-          <Link href={`/items/${item.id}`}>
-            <Eye className="h-3 w-3 mr-1" />
-            View
-          </Link>
-        </Button>
-        <Button asChild variant="outline" size="sm" className="flex-1 border-border bg-secondary hover:bg-accent text-foreground text-xs h-8">
-          <Link href={`/items/${item.id}/edit`}>
-            <Pencil className="h-3 w-3 mr-1" />
-            Edit
-          </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 border-border bg-secondary hover:bg-accent text-foreground text-xs h-8"
+          onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
+        >
+          <Pencil className="h-3 w-3 mr-1" />
+          Edit
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -120,6 +121,7 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
               variant="outline"
               size="sm"
               className="flex-1 border-red-900 bg-secondary hover:bg-red-900/30 text-red-400 text-xs h-8"
+              onClick={(e) => e.stopPropagation()}
             >
               <Trash2 className="h-3 w-3 mr-1" />
               Delete
