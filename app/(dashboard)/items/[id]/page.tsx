@@ -24,8 +24,8 @@ const COMMENT_PAGE_SIZE = 10;
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-2">
-      <dt className="text-sm text-slate-400 sm:w-40 shrink-0">{label}</dt>
-      <dd className="text-sm text-white">{value}</dd>
+      <dt className="text-sm text-muted-foreground sm:w-40 shrink-0">{label}</dt>
+      <dd className="text-sm text-foreground">{value}</dd>
     </div>
   );
 }
@@ -77,30 +77,30 @@ export default async function ViewItemPage({
       <ToastOnMount toastKey={sp.toast} />
 
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors">
           Collection
         </Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-slate-300">
+        <span className="text-foreground">
           {item.brand} {item.model}
         </span>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-white">View</span>
+        <span className="text-foreground">View</span>
       </nav>
 
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {item.brand} {item.model}
           </h1>
-          <p className="text-slate-400 mt-1">{item.variant}</p>
+          <p className="text-muted-foreground mt-1">{item.variant}</p>
         </div>
         <Button
           asChild
           variant="outline"
-          className="border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200"
+          className="border-border bg-card hover:bg-secondary text-foreground"
         >
           <Link href={`/items/${item.id}/edit`}>
             <Pencil className="h-4 w-4 mr-2" />
@@ -114,12 +114,12 @@ export default async function ViewItemPage({
         {/* Left: Item details */}
         <div className="space-y-4">
           {/* Identity */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-white flex items-center gap-3">
+              <CardTitle className="text-base text-foreground flex items-center gap-3">
                 Identity
                 <div className="flex items-center gap-2 ml-auto">
-                  <Badge variant="outline" className="border-slate-600 text-slate-400 text-xs">
+                  <Badge variant="outline" className="border-border text-muted-foreground text-xs">
                     {item.scale}
                   </Badge>
                   {item.grade !== null ? (
@@ -127,7 +127,7 @@ export default async function ViewItemPage({
                       Grade {item.grade}
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="border-slate-600 text-slate-400 text-xs">
+                    <Badge variant="outline" className="border-border text-muted-foreground text-xs">
                       Ungraded
                     </Badge>
                   )}
@@ -145,7 +145,7 @@ export default async function ViewItemPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="divide-y divide-slate-700/50">
+              <dl className="divide-y divide-border">
                 <DetailRow label="Brand" value={item.brand} />
                 <DetailRow label="Make" value={item.make} />
                 <DetailRow label="Model" value={item.model} />
@@ -166,12 +166,12 @@ export default async function ViewItemPage({
           </Card>
 
           {/* Purchase */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-white">Purchase</CardTitle>
+              <CardTitle className="text-base text-foreground">Purchase</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="divide-y divide-slate-700/50">
+              <dl className="divide-y divide-border">
                 <DetailRow label="Price" value={`$${item.purchase_price.toLocaleString()}`} />
                 <DetailRow label="Platform" value={item.purchase_platform} />
                 <DetailRow
@@ -198,12 +198,12 @@ export default async function ViewItemPage({
 
           {/* Sale (only if relevant) */}
           {item.is_sold && (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base text-white">Sale</CardTitle>
+                <CardTitle className="text-base text-foreground">Sale</CardTitle>
               </CardHeader>
               <CardContent>
-                <dl className="divide-y divide-slate-700/50">
+                <dl className="divide-y divide-border">
                   <DetailRow
                     label="Sold Price"
                     value={item.sold_price ? `$${item.sold_price.toLocaleString()}` : "—"}
@@ -226,9 +226,9 @@ export default async function ViewItemPage({
         {/* Right: Comments */}
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Comments{" "}
-              <span className="text-slate-400 font-normal text-sm">
+              <span className="text-muted-foreground font-normal text-sm">
                 ({totalComments})
               </span>
             </h2>
@@ -236,11 +236,11 @@ export default async function ViewItemPage({
 
           <AddCommentToggle itemId={item.id} />
 
-          <Separator className="bg-slate-700" />
+          <Separator className="bg-border" />
 
           {/* Comment list */}
           {pageComments.length === 0 ? (
-            <p className="text-sm text-slate-500 py-4">No comments yet.</p>
+            <p className="text-sm text-muted-foreground py-4">No comments yet.</p>
           ) : (
             <div className="space-y-3">
               {pageComments.map((comment) => (

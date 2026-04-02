@@ -66,25 +66,25 @@ export default async function EditItemPage({
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors">
           Collection
         </Link>
         <ChevronRight className="h-4 w-4" />
         <Link
           href={`/items/${item.id}`}
-          className="hover:text-white transition-colors text-slate-300"
+          className="hover:text-foreground transition-colors text-foreground"
         >
           {item.brand} {item.model}
         </Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-white">Edit</span>
+        <span className="text-foreground">Edit</span>
       </nav>
 
       {/* Page heading */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Edit Item</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Edit Item</h1>
+        <p className="text-muted-foreground mt-1">
           {item.brand} {item.model} — {item.variant}
         </p>
       </div>
@@ -96,10 +96,10 @@ export default async function EditItemPage({
       />
 
       {/* Delete section */}
-      <div className="border-t border-slate-700 pt-6">
+      <div className="border-t border-border pt-6">
         <div className="bg-red-950/20 border border-red-900/40 rounded-xl p-6">
           <h2 className="text-red-400 font-semibold mb-1">Danger Zone</h2>
-          <p className="text-slate-400 text-sm mb-4">
+          <p className="text-muted-foreground text-sm mb-4">
             Permanently delete this item and all its comments. This cannot be undone.
           </p>
           <DeleteItemButton itemId={item.id} />

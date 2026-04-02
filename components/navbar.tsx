@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 const navLinks = [
   { label: "Collection", href: "/" },
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Search", href: "/search" },
   { label: "Settings", href: "/settings" },
 ];
 
@@ -32,10 +31,10 @@ export function Navbar({ username }: NavbarProps) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-700 bg-slate-900/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2 font-semibold text-slate-100 mr-6">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-foreground mr-6">
           <Car className="h-5 w-5 text-blue-500" />
           Motor Miniatures
         </Link>
@@ -48,8 +47,8 @@ export function Navbar({ username }: NavbarProps) {
               href={link.href}
               className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                 pathname === link.href
-                  ? "bg-slate-800 text-slate-100"
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
             >
               {link.label}
@@ -63,13 +62,13 @@ export function Navbar({ username }: NavbarProps) {
           <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-slate-400 hover:text-slate-100">
+                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
                   {username}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-slate-100">
+              <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
                 <DropdownMenuItem
-                  className="cursor-pointer text-red-400 hover:text-red-300 focus:text-red-300 focus:bg-slate-700"
+                  className="cursor-pointer text-red-400 hover:text-red-300 focus:text-red-300 focus:bg-secondary"
                   onClick={() => signOut({ callbackUrl: "/login" })}
                 >
                   Log Out
@@ -82,12 +81,12 @@ export function Navbar({ username }: NavbarProps) {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-slate-900 border-slate-700 w-64">
+              <SheetContent side="right" className="bg-background border-border w-64">
                 <nav className="flex flex-col gap-1 mt-6">
                   {navLinks.map((link) => (
                     <Link
@@ -95,17 +94,17 @@ export function Navbar({ username }: NavbarProps) {
                       href={link.href}
                       className={`px-3 py-2 rounded-md text-sm transition-colors ${
                         pathname === link.href
-                          ? "bg-slate-800 text-slate-100"
-                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                          ? "bg-secondary text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                       }`}
                     >
                       {link.label}
                     </Link>
                   ))}
-                  <div className="border-t border-slate-700 mt-4 pt-4">
+                  <div className="border-t border-border mt-4 pt-4">
                     <button
                       onClick={() => signOut({ callbackUrl: "/login" })}
-                      className="w-full text-left px-3 py-2 rounded-md text-sm text-red-400 hover:text-red-300 hover:bg-slate-800 transition-colors"
+                      className="w-full text-left px-3 py-2 rounded-md text-sm text-red-400 hover:text-red-300 hover:bg-secondary transition-colors"
                     >
                       Log Out
                     </button>

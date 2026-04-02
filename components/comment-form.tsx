@@ -44,7 +44,7 @@ export function CommentForm({ itemId, onSuccess, onCancel }: CommentFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="comment-title" className="text-slate-300">
+        <Label htmlFor="comment-title" className="text-foreground">
           Title
         </Label>
         <Input
@@ -53,13 +53,13 @@ export function CommentForm({ itemId, onSuccess, onCancel }: CommentFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={64}
           placeholder="Comment title"
-          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500"
+          className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500"
           required
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="comment-description" className="text-slate-300">
+        <Label htmlFor="comment-description" className="text-foreground">
           Description
         </Label>
         <Textarea
@@ -68,7 +68,7 @@ export function CommentForm({ itemId, onSuccess, onCancel }: CommentFormProps) {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Write your comment..."
           rows={3}
-          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 resize-none"
+          className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500 resize-none"
           required
         />
       </div>
@@ -89,7 +89,7 @@ export function CommentForm({ itemId, onSuccess, onCancel }: CommentFormProps) {
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-200"
+            className="border-border bg-secondary hover:bg-accent text-foreground"
           >
             Cancel
           </Button>

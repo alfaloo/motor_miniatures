@@ -25,8 +25,8 @@ export function AddCommentToggle({ itemId }: AddCommentToggleProps) {
         </Button>
       )}
       {isOpen && (
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          <h4 className="text-sm font-medium text-slate-300 mb-3">New Comment</h4>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <h4 className="text-sm font-medium text-foreground mb-3">New Comment</h4>
           <CommentForm
             itemId={itemId}
             onSuccess={() => setIsOpen(false)}

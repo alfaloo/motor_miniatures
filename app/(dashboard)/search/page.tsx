@@ -143,19 +143,19 @@ async function SearchResults({
   return (
     <>
       {/* Results summary info bar */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-wrap gap-6 items-center">
+      <div className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-6 items-center">
         <div className="flex flex-col">
-          <span className="text-xs text-slate-400 uppercase tracking-wide">Matched Items</span>
-          <span className="text-2xl font-bold text-white">{totalCount}</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">Matched Items</span>
+          <span className="text-2xl font-bold text-foreground">{totalCount}</span>
         </div>
-        <div className="w-px h-10 bg-slate-700 hidden sm:block" />
+        <div className="w-px h-10 bg-border hidden sm:block" />
         <div className="flex flex-col">
-          <span className="text-xs text-slate-400 uppercase tracking-wide">Total Purchase Value</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Purchase Value</span>
           <span className="text-2xl font-bold text-blue-400">{formatDollars(totalPurchaseValue)}</span>
         </div>
-        <div className="w-px h-10 bg-slate-700 hidden sm:block" />
+        <div className="w-px h-10 bg-border hidden sm:block" />
         <div className="flex flex-col">
-          <span className="text-xs text-slate-400 uppercase tracking-wide">Total Sale Value</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Sale Value</span>
           <span className="text-2xl font-bold text-green-400">{formatDollars(totalSoldValue)}</span>
         </div>
       </div>
@@ -163,10 +163,10 @@ async function SearchResults({
       {/* No results */}
       {totalCount === 0 && (
         <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-          <SearchX className="h-16 w-16 text-slate-600" />
+          <SearchX className="h-16 w-16 text-muted-foreground" />
           <div>
-            <h2 className="text-xl font-semibold text-slate-300">No items match your filters</h2>
-            <p className="text-slate-500 mt-1">Try adjusting your search criteria.</p>
+            <h2 className="text-xl font-semibold text-foreground">No items match your filters</h2>
+            <p className="text-muted-foreground mt-1">Try adjusting your search criteria.</p>
           </div>
         </div>
       )}
@@ -195,18 +195,18 @@ async function SearchResults({
 function SearchResultsSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-wrap gap-6 items-center">
+      <div className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-6 items-center">
         <div className="flex flex-col gap-1">
-          <div className="h-3 w-20 bg-slate-700 rounded animate-pulse" />
-          <div className="h-7 w-12 bg-slate-700 rounded animate-pulse" />
+          <div className="h-3 w-20 bg-secondary rounded animate-pulse" />
+          <div className="h-7 w-12 bg-secondary rounded animate-pulse" />
         </div>
         <div className="flex flex-col gap-1">
-          <div className="h-3 w-32 bg-slate-700 rounded animate-pulse" />
-          <div className="h-7 w-20 bg-slate-700 rounded animate-pulse" />
+          <div className="h-3 w-32 bg-secondary rounded animate-pulse" />
+          <div className="h-7 w-20 bg-secondary rounded animate-pulse" />
         </div>
         <div className="flex flex-col gap-1">
-          <div className="h-3 w-24 bg-slate-700 rounded animate-pulse" />
-          <div className="h-7 w-20 bg-slate-700 rounded animate-pulse" />
+          <div className="h-3 w-24 bg-secondary rounded animate-pulse" />
+          <div className="h-7 w-20 bg-secondary rounded animate-pulse" />
         </div>
       </div>
       <ItemCardSkeletonGrid />
@@ -253,19 +253,19 @@ export default async function SearchPage({
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Search</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Search</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Filter your collection by any combination of fields.
           </p>
         </div>
         <SearchForm collectingSinceYear={collectingSinceYear} />
         <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-          <SearchX className="h-16 w-16 text-slate-600" />
+          <SearchX className="h-16 w-16 text-muted-foreground" />
           <div>
-            <h2 className="text-xl font-semibold text-slate-300">
+            <h2 className="text-xl font-semibold text-foreground">
               Use the filters above to search your collection
             </h2>
-            <p className="text-slate-500 mt-1">
+            <p className="text-muted-foreground mt-1">
               Select one or more filters and click Search to find items.
             </p>
           </div>
@@ -277,8 +277,8 @@ export default async function SearchPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Search</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Search</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Filter your collection by any combination of fields.
         </p>
       </div>

@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { items } from "@/db/schema";
+import { items, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import DashboardCharts from "./dashboard-charts";
@@ -28,6 +28,15 @@ export default async function DashboardPage() {
   }
 
   const userId = session.user.id;
+
+  // Fetch user settings
+  const userRecord = await db
+    .select({ months_look_back: users.months_look_back, top_values_count: users.top_values_count })
+    .from(users)
+    .where(eq(users.id, userId))
+    .then((rows) => rows[0]);
+  const monthsLookBack = userRecord?.months_look_back ?? 12;
+  const topValuesCount = userRecord?.top_values_count ?? 12;
 
   // Fetch all items for the user in one query
   const allItems = await db
@@ -57,13 +66,13 @@ export default async function DashboardPage() {
     { label: "On Preorder", value: onPreorder.toLocaleString() },
   ];
 
-  // --- 12-month range ending at current month ---
+  // --- Rolling month range ending at current month ---
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1; // 1–12
 
   const months: { year: number; month: number; label: string }[] = [];
-  for (let i = 11; i >= 0; i--) {
+  for (let i = monthsLookBack - 1; i >= 0; i--) {
     let month = currentMonth - i;
     let year = currentYear;
     if (month <= 0) {
@@ -74,8 +83,17 @@ export default async function DashboardPage() {
     months.push({ year, month, label });
   }
 
+  // Trim leading months with no purchases so the charts show only from the
+  // first month that has activity (min of setting vs actual data range).
+  const firstActiveIdx = months.findIndex(({ year, month }) =>
+    allItems.some(
+      (item) => item.purchase_year === year && item.purchase_month === month
+    )
+  );
+  const activeMonths = firstActiveIdx === -1 ? [] : months.slice(firstActiveIdx);
+
   // Chart 1: Purchase Value Per Month
-  const purchaseValueByMonth = months.map(({ year, month, label }) => {
+  const purchaseValueByMonth = activeMonths.map(({ year, month, label }) => {
     const value = allItems
       .filter(
         (item) => item.purchase_year === year && item.purchase_month === month
@@ -85,7 +103,7 @@ export default async function DashboardPage() {
   });
 
   // Chart 2: Models Purchased Per Month
-  const modelCountByMonth = months.map(({ year, month, label }) => {
+  const modelCountByMonth = activeMonths.map(({ year, month, label }) => {
     const count = allItems.filter(
       (item) => item.purchase_year === year && item.purchase_month === month
     ).length;
@@ -102,7 +120,7 @@ export default async function DashboardPage() {
     });
   const topBrands = Array.from(brandCounts.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
+    .slice(0, topValuesCount)
     .map(([name, count]) => ({ name, count }));
 
   // Chart 4: Top 12 Car Makes in Collection (unsold only)
@@ -116,22 +134,22 @@ export default async function DashboardPage() {
     });
   const topMakes = Array.from(makeCounts.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
+    .slice(0, topValuesCount)
     .map(([name, count]) => ({ name, count }));
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <h1 className="text-3xl font-bold text-white mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-slate-800 border border-slate-700 rounded-xl p-6"
+            className="bg-card border border-border rounded-xl p-6"
           >
-            <p className="text-sm text-slate-400 mb-1">{stat.label}</p>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
+            <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -142,6 +160,8 @@ export default async function DashboardPage() {
         modelCountByMonth={modelCountByMonth}
         topBrands={topBrands}
         topMakes={topMakes}
+        monthsLookBack={monthsLookBack}
+        topValuesCount={topValuesCount}
       />
     </div>
   );
