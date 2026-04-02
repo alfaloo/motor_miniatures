@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, PackageCheck } from "lucide-react";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -38,9 +38,10 @@ interface ItemCardProps {
     is_sold: boolean;
   };
   onDelete?: (id: string) => void;
+  onAcquire?: (id: string) => void;
 }
 
-export function ItemCard({ item, onDelete }: ItemCardProps) {
+export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
   const router = useRouter();
   const purchasedLabel = `${MONTHS[item.purchase_month - 1]} ${item.purchase_year}`;
   const showPreorder = item.is_preorder && item.received_year === null;
@@ -48,6 +49,12 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
   function handleDelete() {
     if (onDelete) {
       onDelete(item.id);
+    }
+  }
+
+  function handleAcquire() {
+    if (onAcquire) {
+      onAcquire(item.id);
     }
   }
 
@@ -106,6 +113,40 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
 
       {/* Action row */}
       <div className="flex items-center gap-2 pt-1 mt-auto">
+        {onAcquire && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-teal-700 bg-secondary hover:bg-teal-900/30 text-teal-400 text-xs h-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <PackageCheck className="h-3 w-3 mr-1" />
+                Acquire
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-card border border-border">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-foreground">Move to Collection?</AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground">
+                  This will move {item.brand} {item.make} {item.model} to your main collection. All data will be kept as-is.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="border-border bg-secondary hover:bg-accent text-foreground">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleAcquire}
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  Acquire
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
         <Button
           variant="outline"
           size="sm"
