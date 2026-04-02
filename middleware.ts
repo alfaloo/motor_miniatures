@@ -13,15 +13,6 @@ export default auth((req) => {
     );
   }
 
-  // Forward resolved theme cookie as a request header so the root layout
-  // can apply the correct data-theme attribute server-side (no FOUC).
-  const resolvedTheme = req.cookies.get("theme-resolved")?.value;
-  if (resolvedTheme === "light" || resolvedTheme === "dark") {
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set("x-theme-resolved", resolvedTheme);
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  }
-
   return NextResponse.next();
 });
 

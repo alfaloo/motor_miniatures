@@ -50,17 +50,17 @@ export function DeleteItemButton({ itemId }: DeleteItemButtonProps) {
           Delete Item
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-slate-800 border-slate-700">
+      <AlertDialogContent className="bg-card border-border">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-white">
+          <AlertDialogTitle className="text-foreground">
             Delete this item?
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-slate-400">
+          <AlertDialogDescription className="text-muted-foreground">
             Are you sure you want to delete this item? This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600">
+          <AlertDialogCancel className="bg-secondary border-border text-foreground hover:bg-accent">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction

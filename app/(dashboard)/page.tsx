@@ -88,10 +88,10 @@ async function CollectionItems({
   if (totalItems === 0 && !hasFilter) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <PackageOpen className="h-16 w-16 text-slate-600" />
+        <PackageOpen className="h-16 w-16 text-muted-foreground" />
         <div>
-          <h2 className="text-xl font-semibold text-slate-300">No items yet</h2>
-          <p className="text-slate-500 mt-1">
+          <h2 className="text-xl font-semibold text-foreground">No items yet</h2>
+          <p className="text-muted-foreground mt-1">
             Start building your collection by adding your first item.
           </p>
         </div>
@@ -109,14 +109,14 @@ async function CollectionItems({
     <>
       {/* Items count — hidden when summary bar is visible (i.e. when filters are active) */}
       {!hasFilter && (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted-foreground">
           {totalItems} {totalItems === 1 ? "item" : "items"}
         </p>
       )}
       {totalItems === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-          <PackageOpen className="h-16 w-16 text-slate-600" />
-          <p className="text-slate-400">No items match your current filters.</p>
+          <PackageOpen className="h-16 w-16 text-muted-foreground" />
+          <p className="text-muted-foreground">No items match your current filters.</p>
         </div>
       ) : (
         <>

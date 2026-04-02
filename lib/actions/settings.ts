@@ -143,7 +143,7 @@ export async function updateDisplaySettings(theme: string): Promise<{ success: b
     redirect("/login");
   }
 
-  if (theme !== "dark" && theme !== "light" && theme !== "clock") {
+  if (theme !== "dark" && theme !== "light" && theme !== "system" && theme !== "time") {
     return { success: false, error: "Invalid theme value" };
   }
 

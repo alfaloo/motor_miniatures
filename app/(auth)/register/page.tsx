@@ -14,11 +14,11 @@ export default function RegisterPage() {
   const [state, formAction, isPending] = useActionState(registerUser, initialState);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
-      <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-2xl text-slate-100">Create an account</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-2xl text-foreground">Create an account</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Enter your details below to register
           </CardDescription>
         </CardHeader>
@@ -29,13 +29,13 @@ export default function RegisterPage() {
             )}
 
             <div className="space-y-1">
-              <Label htmlFor="username" className="text-slate-300">Username</Label>
+              <Label htmlFor="username" className="text-foreground">Username</Label>
               <Input
                 id="username"
                 name="username"
                 type="text"
                 placeholder="your_username"
-                className="bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500"
+                className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
               />
               {state.errors?.username && (
                 <p className="text-sm text-red-400">{state.errors.username}</p>
@@ -43,13 +43,13 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="password" className="text-slate-300">Password</Label>
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 placeholder="••••••••"
-                className="bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500"
+                className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
               />
               {state.errors?.password && (
                 <p className="text-sm text-red-400">{state.errors.password}</p>
@@ -57,13 +57,13 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="confirmPassword" className="text-slate-300">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 placeholder="••••••••"
-                className="bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500"
+                className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
               />
               {state.errors?.confirmPassword && (
                 <p className="text-sm text-red-400">{state.errors.confirmPassword}</p>
@@ -78,7 +78,7 @@ export default function RegisterPage() {
             >
               {isPending ? "Creating account..." : "Register"}
             </Button>
-            <p className="text-sm text-slate-400 text-center">
+            <p className="text-sm text-muted-foreground text-center">
               Already have an account?{" "}
               <Link href="/login" className="text-blue-400 hover:text-blue-300 underline">
                 Log in

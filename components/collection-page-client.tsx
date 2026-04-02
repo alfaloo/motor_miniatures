@@ -107,7 +107,7 @@ export function CollectionPageClient({
     <div className="space-y-4">
       {/* Action bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-2xl font-bold text-white">My Collection</h1>
+        <h1 className="text-2xl font-bold text-foreground">My Collection</h1>
         <div className="flex items-center gap-2">
           <SortControls
             currentSort={sortParam}
@@ -117,7 +117,7 @@ export function CollectionPageClient({
           <Button
             variant="outline"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="h-9 bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+            className="h-9 bg-card border-border text-foreground hover:bg-secondary"
           >
             <Filter className="h-4 w-4 mr-2" />
             Filter
@@ -138,19 +138,19 @@ export function CollectionPageClient({
 
       {/* Summary bar — always visible above filter panel when filters are active */}
       {summaryData && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-wrap gap-6 items-center">
+        <div className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-6 items-center">
           <div className="flex flex-col">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Matched Items</span>
-            <span className="text-2xl font-bold text-white">{summaryData.matchedCount}</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">Matched Items</span>
+            <span className="text-2xl font-bold text-foreground">{summaryData.matchedCount}</span>
           </div>
-          <div className="w-px h-10 bg-slate-700 hidden sm:block" />
+          <div className="w-px h-10 bg-border hidden sm:block" />
           <div className="flex flex-col">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Total Purchase Value</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Purchase Value</span>
             <span className="text-2xl font-bold text-blue-400">${summaryData.totalPurchaseValue.toLocaleString()}</span>
           </div>
-          <div className="w-px h-10 bg-slate-700 hidden sm:block" />
+          <div className="w-px h-10 bg-border hidden sm:block" />
           <div className="flex flex-col">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Total Sale Value</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Sale Value</span>
             <span className="text-2xl font-bold text-green-400">${summaryData.totalSoldValue.toLocaleString()}</span>
           </div>
         </div>
@@ -162,12 +162,12 @@ export function CollectionPageClient({
           {activeTags.map(({ key, label }) => (
             <span
               key={key}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-700 text-slate-200 text-xs rounded-md border border-slate-600"
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary text-foreground text-xs rounded-md border border-border"
             >
               {label}
               <button
                 onClick={() => handleRemoveTag(key)}
-                className="text-slate-400 hover:text-white ml-0.5 leading-none"
+                className="text-muted-foreground hover:text-foreground ml-0.5 leading-none"
                 aria-label={`Remove ${label} filter`}
               >
                 ×

@@ -70,7 +70,7 @@ export function SortControls({
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1">
         <Select value={currentSort} onValueChange={handleSortChange}>
-          <SelectTrigger className="h-9 w-[160px] bg-slate-800 border-slate-700 text-slate-200 text-sm">
+          <SelectTrigger className="h-9 w-[160px] bg-card border-border text-foreground text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -85,7 +85,7 @@ export function SortControls({
       <Button
         variant="outline"
         size="icon"
-        className="h-9 w-9 bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+        className="h-9 w-9 bg-card border-border text-foreground hover:bg-secondary"
         onClick={handleDirToggle}
         aria-label={currentDir === "asc" ? "Sort ascending" : "Sort descending"}
       >

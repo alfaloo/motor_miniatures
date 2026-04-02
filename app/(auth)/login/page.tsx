@@ -19,10 +19,10 @@ function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginUser, initialState);
 
   return (
-    <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+    <Card className="w-full max-w-md bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-2xl text-slate-100">Welcome back</CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardTitle className="text-2xl text-foreground">Welcome back</CardTitle>
+        <CardDescription className="text-muted-foreground">
           Sign in to your Motor Miniatures account
         </CardDescription>
       </CardHeader>
@@ -34,24 +34,24 @@ function LoginForm() {
           )}
 
           <div className="space-y-1">
-            <Label htmlFor="username" className="text-slate-300">Username</Label>
+            <Label htmlFor="username" className="text-foreground">Username</Label>
             <Input
               id="username"
               name="username"
               type="text"
               placeholder="your_username"
-              className="bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500"
+              className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
             />
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="password" className="text-slate-300">Password</Label>
+            <Label htmlFor="password" className="text-foreground">Password</Label>
             <Input
               id="password"
               name="password"
               type="password"
               placeholder="••••••••"
-              className="bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500"
+              className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
             />
           </div>
         </CardContent>
@@ -63,7 +63,7 @@ function LoginForm() {
           >
             {isPending ? "Signing in..." : "Log in"}
           </Button>
-          <p className="text-sm text-slate-400 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="text-blue-400 hover:text-blue-300 underline">
               Register
@@ -77,11 +77,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Suspense fallback={
-        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+        <Card className="w-full max-w-md bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-2xl text-slate-100">Welcome back</CardTitle>
+            <CardTitle className="text-2xl text-foreground">Welcome back</CardTitle>
           </CardHeader>
         </Card>
       }>

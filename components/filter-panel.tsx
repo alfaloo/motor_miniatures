@@ -108,75 +108,75 @@ export function FilterPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-6">
+    <div className="bg-card border border-border rounded-xl p-6 space-y-6">
       {/* Identity */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
           Identity
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="fp-brand" className="text-slate-300">Brand</Label>
+            <Label htmlFor="fp-brand" className="text-foreground">Brand</Label>
             <Input
               id="fp-brand"
               placeholder="e.g. Autoart"
               value={values.brand ?? ""}
               onChange={(e) => setText("brand", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.brand) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-make" className="text-slate-300">Make</Label>
+            <Label htmlFor="fp-make" className="text-foreground">Make</Label>
             <Input
               id="fp-make"
               placeholder="e.g. Porsche"
               value={values.make ?? ""}
               onChange={(e) => setText("make", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.make) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-model" className="text-slate-300">Model</Label>
+            <Label htmlFor="fp-model" className="text-foreground">Model</Label>
             <Input
               id="fp-model"
               placeholder="e.g. 911 GT3"
               value={values.model ?? ""}
               onChange={(e) => setText("model", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.model) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-variant" className="text-slate-300">Variant</Label>
+            <Label htmlFor="fp-variant" className="text-foreground">Variant</Label>
             <Input
               id="fp-variant"
               placeholder="e.g. Racing Edition"
               value={values.variant ?? ""}
               onChange={(e) => setText("variant", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.variant) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Scale</Label>
+            <Label className="text-foreground">Scale</Label>
             <Select
               value={values.scale ?? "any"}
               onValueChange={(v) => setSelect("scale", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.scale) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any scale" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="1/18">1/18</SelectItem>
                 <SelectItem value="1/24">1/24</SelectItem>
@@ -186,19 +186,19 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Grade</Label>
+            <Label className="text-foreground">Grade</Label>
             <Select
               value={values.grade ?? "any"}
               onValueChange={(v) => setSelect("grade", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.grade) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any grade" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="ungraded">Ungraded</SelectItem>
                 {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((g) => (
@@ -214,32 +214,32 @@ export function FilterPanel({
 
       {/* Details */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
           Details
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="fp-serial-number" className="text-slate-300">Serial Number</Label>
+            <Label htmlFor="fp-serial-number" className="text-foreground">Serial Number</Label>
             <Input
               id="fp-serial-number"
               type="number"
               placeholder="Exact match"
               value={values.serial_number ?? ""}
               onChange={(e) => setText("serial_number", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.serial_number) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-production-count" className="text-slate-300">Production Count</Label>
+            <Label htmlFor="fp-production-count" className="text-foreground">Production Count</Label>
             <Input
               id="fp-production-count"
               type="number"
               placeholder="Exact match"
               value={values.production_count ?? ""}
               onChange={(e) => setText("production_count", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.production_count) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
@@ -249,49 +249,49 @@ export function FilterPanel({
 
       {/* Purchase */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
           Purchase
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="fp-purchase-platform" className="text-slate-300">Purchase Platform</Label>
+            <Label htmlFor="fp-purchase-platform" className="text-foreground">Purchase Platform</Label>
             <Input
               id="fp-purchase-platform"
               placeholder="e.g. eBay"
               value={values.purchase_platform ?? ""}
               onChange={(e) => setText("purchase_platform", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.purchase_platform) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-purchase-price" className="text-slate-300">Purchase Price ($)</Label>
+            <Label htmlFor="fp-purchase-price" className="text-foreground">Purchase Price ($)</Label>
             <Input
               id="fp-purchase-price"
               type="number"
               placeholder="Exact match"
               value={values.purchase_price ?? ""}
               onChange={(e) => setText("purchase_price", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.purchase_price) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Purchase Year</Label>
+            <Label className="text-foreground">Purchase Year</Label>
             <Select
               value={values.purchase_year ?? "any"}
               onValueChange={(v) => setSelect("purchase_year", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.purchase_year) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any year" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 {years.map((y) => (
                   <SelectItem key={y} value={String(y)}>
@@ -302,19 +302,19 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Purchase Month</Label>
+            <Label className="text-foreground">Purchase Month</Label>
             <Select
               value={values.purchase_month ?? "any"}
               onValueChange={(v) => setSelect("purchase_month", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.purchase_month) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any month" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 {MONTHS.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
@@ -325,19 +325,19 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Is Preorder</Label>
+            <Label className="text-foreground">Is Preorder</Label>
             <Select
               value={values.is_preorder ?? "any"}
               onValueChange={(v) => setSelect("is_preorder", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.is_preorder) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="yes">Yes</SelectItem>
                 <SelectItem value="no">No</SelectItem>
@@ -349,24 +349,24 @@ export function FilterPanel({
 
       {/* Received */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
           Received
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Received Year</Label>
+            <Label className="text-foreground">Received Year</Label>
             <Select
               value={values.received_year ?? "any"}
               onValueChange={(v) => setSelect("received_year", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.received_year) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any year" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 {years.map((y) => (
                   <SelectItem key={y} value={String(y)}>
@@ -377,19 +377,19 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Received Month</Label>
+            <Label className="text-foreground">Received Month</Label>
             <Select
               value={values.received_month ?? "any"}
               onValueChange={(v) => setSelect("received_month", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.received_month) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any month" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 {MONTHS.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
@@ -404,24 +404,24 @@ export function FilterPanel({
 
       {/* Sale */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
           Sale
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Is Sold</Label>
+            <Label className="text-foreground">Is Sold</Label>
             <Select
               value={values.is_sold ?? "any"}
               onValueChange={(v) => setSelect("is_sold", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.is_sold) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="yes">Yes</SelectItem>
                 <SelectItem value="no">No</SelectItem>
@@ -429,44 +429,44 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-sold-price" className="text-slate-300">Sold Price ($)</Label>
+            <Label htmlFor="fp-sold-price" className="text-foreground">Sold Price ($)</Label>
             <Input
               id="fp-sold-price"
               type="number"
               placeholder="Exact match"
               value={values.sold_price ?? ""}
               onChange={(e) => setText("sold_price", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.sold_price) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="fp-sold-platform" className="text-slate-300">Sold Platform</Label>
+            <Label htmlFor="fp-sold-platform" className="text-foreground">Sold Platform</Label>
             <Input
               id="fp-sold-platform"
               placeholder="e.g. eBay"
               value={values.sold_platform ?? ""}
               onChange={(e) => setText("sold_platform", e.target.value)}
-              className={`bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 ${
+              className={`bg-secondary border-border text-foreground placeholder:text-muted-foreground ${
                 isActive(values.sold_platform) ? ACTIVE_FILTER_CLASS : ""
               }`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Sold Year</Label>
+            <Label className="text-foreground">Sold Year</Label>
             <Select
               value={values.sold_year ?? "any"}
               onValueChange={(v) => setSelect("sold_year", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.sold_year) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any year" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 {years.map((y) => (
                   <SelectItem key={y} value={String(y)}>
@@ -477,19 +477,19 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300">Sold Month</Label>
+            <Label className="text-foreground">Sold Month</Label>
             <Select
               value={values.sold_month ?? "any"}
               onValueChange={(v) => setSelect("sold_month", v)}
             >
               <SelectTrigger
-                className={`bg-slate-700 border-slate-600 text-white ${
+                className={`bg-secondary border-border text-foreground ${
                   isActive(values.sold_month) ? ACTIVE_FILTER_CLASS : ""
                 }`}
               >
                 <SelectValue placeholder="Any month" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
                 {MONTHS.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
@@ -516,7 +516,7 @@ export function FilterPanel({
           type="button"
           variant="outline"
           onClick={handleClear}
-          className="border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-200"
+          className="border-border bg-secondary hover:bg-accent text-foreground"
         >
           <X className="h-4 w-4 mr-2" />
           Clear

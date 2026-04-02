@@ -27,7 +27,9 @@ export default async function SettingsPage() {
   const username = user?.username ?? "";
   const monthsLookBack = user?.months_look_back ?? 12;
   const topValuesCount = user?.top_values_count ?? 12;
-  const theme = user?.theme ?? "dark";
+  // Normalise legacy "clock" value to the new "time" option
+  const rawTheme = user?.theme ?? "dark";
+  const theme = rawTheme === "clock" ? "time" : rawTheme;
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">

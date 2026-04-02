@@ -139,17 +139,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <h1 className="text-3xl font-bold text-white mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-slate-800 border border-slate-700 rounded-xl p-6"
+            className="bg-card border border-border rounded-xl p-6"
           >
-            <p className="text-sm text-slate-400 mb-1">{stat.label}</p>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
+            <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
           </div>
         ))}
       </div>

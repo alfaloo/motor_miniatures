@@ -104,8 +104,8 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
   }
 
   const inputClass =
-    "bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500";
-  const labelClass = "text-slate-300";
+    "bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring";
+  const labelClass = "text-foreground";
   const errorClass = "text-red-400 text-sm mt-1";
 
   return (
@@ -117,8 +117,8 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
       )}
 
       {/* Identity Section */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4">
-        <h2 className="text-slate-100 font-semibold text-lg">Identity</h2>
+      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <h2 className="text-foreground font-semibold text-lg">Identity</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
@@ -154,9 +154,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
               <SelectTrigger id="scale" className={inputClass}>
                 <SelectValue placeholder="Select scale" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectContent className="bg-card border-border">
                 {["1/18", "1/24", "1/43", "1/64"].map((s) => (
-                  <SelectItem key={s} value={s} className="text-slate-100 focus:bg-slate-700">
+                  <SelectItem key={s} value={s} className="text-foreground focus:bg-secondary">
                     {s}
                   </SelectItem>
                 ))}
@@ -168,8 +168,8 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
       </div>
 
       {/* Details Section */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4">
-        <h2 className="text-slate-100 font-semibold text-lg">Details</h2>
+      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <h2 className="text-foreground font-semibold text-lg">Details</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1">
@@ -209,12 +209,12 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
               <SelectTrigger id="grade" className={inputClass}>
                 <SelectValue placeholder="Select grade" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="ungraded" className="text-slate-100 focus:bg-slate-700">
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="ungraded" className="text-foreground focus:bg-secondary">
                   Ungraded
                 </SelectItem>
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
-                  <SelectItem key={g} value={String(g)} className="text-slate-100 focus:bg-slate-700">
+                  <SelectItem key={g} value={String(g)} className="text-foreground focus:bg-secondary">
                     {g}
                   </SelectItem>
                 ))}
@@ -226,8 +226,8 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
       </div>
 
       {/* Purchase Section */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4">
-        <h2 className="text-slate-100 font-semibold text-lg">Purchase</h2>
+      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <h2 className="text-foreground font-semibold text-lg">Purchase</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
@@ -263,9 +263,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
               <SelectTrigger id="purchase_year" className={inputClass}>
                 <SelectValue placeholder="Select year" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectContent className="bg-card border-border">
                 {yearOptions.map((y) => (
-                  <SelectItem key={y} value={String(y)} className="text-slate-100 focus:bg-slate-700">
+                  <SelectItem key={y} value={String(y)} className="text-foreground focus:bg-secondary">
                     {y}
                   </SelectItem>
                 ))}
@@ -283,9 +283,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
               <SelectTrigger id="purchase_month" className={inputClass}>
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectContent className="bg-card border-border">
                 {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={String(m.value)} className="text-slate-100 focus:bg-slate-700">
+                  <SelectItem key={m.value} value={String(m.value)} className="text-foreground focus:bg-secondary">
                     {m.label}
                   </SelectItem>
                 ))}
@@ -309,7 +309,7 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
                 setValue("received_month", null, { shouldValidate: false });
               }
             }}
-            className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            className="border-border data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
           <Label htmlFor="is_preorder" className={labelClass}>Is Preorder</Label>
         </div>
@@ -326,9 +326,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
                 <SelectTrigger id="received_year" className={inputClass}>
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-card border-border">
                   {yearOptions.map((y) => (
-                    <SelectItem key={y} value={String(y)} className="text-slate-100 focus:bg-slate-700">
+                    <SelectItem key={y} value={String(y)} className="text-foreground focus:bg-secondary">
                       {y}
                     </SelectItem>
                   ))}
@@ -346,9 +346,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
                 <SelectTrigger id="received_month" className={inputClass}>
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-card border-border">
                   {MONTHS.map((m) => (
-                    <SelectItem key={m.value} value={String(m.value)} className="text-slate-100 focus:bg-slate-700">
+                    <SelectItem key={m.value} value={String(m.value)} className="text-foreground focus:bg-secondary">
                       {m.label}
                     </SelectItem>
                   ))}
@@ -361,8 +361,8 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
       </div>
 
       {/* Sale Section */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-4">
-        <h2 className="text-slate-100 font-semibold text-lg">Sale</h2>
+      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <h2 className="text-foreground font-semibold text-lg">Sale</h2>
 
         {/* Is Sold */}
         <div className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
                 setValue("sold_month", null, { shouldValidate: false });
               }
             }}
-            className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            className="border-border data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
           <Label htmlFor="is_sold" className={labelClass}>Is Sold</Label>
         </div>
@@ -421,9 +421,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
                 <SelectTrigger id="sold_year" className={inputClass}>
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-card border-border">
                   {yearOptions.map((y) => (
-                    <SelectItem key={y} value={String(y)} className="text-slate-100 focus:bg-slate-700">
+                    <SelectItem key={y} value={String(y)} className="text-foreground focus:bg-secondary">
                       {y}
                     </SelectItem>
                   ))}
@@ -441,9 +441,9 @@ export function ItemForm({ collectingSinceYear, initialData, itemId }: ItemFormP
                 <SelectTrigger id="sold_month" className={inputClass}>
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-card border-border">
                   {MONTHS.map((m) => (
-                    <SelectItem key={m.value} value={String(m.value)} className="text-slate-100 focus:bg-slate-700">
+                    <SelectItem key={m.value} value={String(m.value)} className="text-foreground focus:bg-secondary">
                       {m.label}
                     </SelectItem>
                   ))}

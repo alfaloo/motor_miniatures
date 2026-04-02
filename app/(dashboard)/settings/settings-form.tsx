@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTheme } from "next-themes";
 import { updateGeneralSettings, updateDisplaySettings, updateUsername, updatePassword } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,7 @@ type FieldStatus = "idle" | "success" | "error";
 
 function getInputClass(status: FieldStatus): string {
   const base =
-    "h-9 rounded-md border border-slate-600 bg-slate-900 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600";
+    "h-9 rounded-md border border-border bg-secondary text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
   if (status === "success") return `${base} ring-2 ring-green-500`;
   if (status === "error") return `${base} ring-2 ring-red-500`;
   return base;
@@ -65,6 +66,7 @@ export default function SettingsForm({
   const [isPendingDisplay, startDisplayTransition] = useTransition();
   const [themeStatus, setThemeStatus] = useState<FieldStatus>("idle");
   const [themeError, setThemeError] = useState<string | null>(null);
+  const { setTheme } = useTheme();
 
   const years: number[] = [];
   for (let y = currentYear; y >= 1900; y--) {
@@ -115,15 +117,6 @@ export default function SettingsForm({
     });
   }
 
-  function resolveTheme(themeValue: string): "light" | "dark" {
-    if (themeValue === "light") return "light";
-    if (themeValue === "clock") {
-      const hour = new Date().getHours();
-      return hour >= 7 && hour < 19 ? "light" : "dark";
-    }
-    return "dark";
-  }
-
   function handleDisplaySubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setThemeError(null);
@@ -133,9 +126,12 @@ export default function SettingsForm({
       const result = await updateDisplaySettings(selectedTheme);
       if (result.success) {
         setThemeStatus("success");
-        const resolved = resolveTheme(selectedTheme);
-        document.documentElement.setAttribute("data-theme", resolved);
-        document.cookie = `theme-resolved=${resolved};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
+        if (selectedTheme === "time") {
+          const hour = new Date().getHours();
+          setTheme(hour >= 7 && hour < 19 ? "light" : "dark");
+        } else {
+          setTheme(selectedTheme);
+        }
       } else {
         setThemeStatus("error");
         setThemeError(result.error ?? "Failed to save display settings");
@@ -287,13 +283,14 @@ export default function SettingsForm({
               }}
               className={`w-full ${getInputClass(themeStatus)}`}
             >
-              <option value="dark">Dark Mode</option>
-              <option value="light">Light Mode</option>
-              <option value="clock">Clock Sync</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="time">Sync with Time</option>
+              <option value="system">Sync with OS</option>
             </select>
             {themeError && <p className="text-xs text-red-400">{themeError}</p>}
             <p className="text-xs text-muted-foreground">
-              Clock Sync applies Light Mode from 07:00–19:00 and Dark Mode at night.
+              Sync with Time applies Light Mode from 07:00–19:00 and Dark Mode at night. Sync with OS follows your system preference.
             </p>
           </div>
 

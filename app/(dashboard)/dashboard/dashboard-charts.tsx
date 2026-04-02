@@ -29,6 +29,7 @@ interface DashboardChartsProps {
 }
 
 const BLUE = "#2563EB";
+const BLUE_ACTIVE = "#1d4ed8";
 
 const valueChartConfig: ChartConfig = {
   value: { label: "Purchase Value", color: BLUE },
@@ -51,8 +52,8 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-white mb-4">{title}</h2>
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h2 className="text-lg font-semibold text-foreground mb-4">{title}</h2>
       {children}
     </div>
   );
@@ -91,8 +92,8 @@ export default function DashboardCharts({
               tickLine={false}
               tickFormatter={(v: number) => `$${v}`}
             />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]}>
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} activeBar={{ fill: BLUE_ACTIVE }}>
               <LabelList
                 dataKey="value"
                 position="top"
@@ -127,8 +128,8 @@ export default function DashboardCharts({
               tickLine={false}
               allowDecimals={false}
             />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]}>
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]} activeBar={{ fill: BLUE_ACTIVE }}>
               <LabelList
                 dataKey="count"
                 position="top"
@@ -142,7 +143,7 @@ export default function DashboardCharts({
       {/* Chart 3: Top N Model Brands */}
       <ChartCard title={`Top ${topValuesCount} Model Brands in Collection`}>
         {topBrands.length === 0 ? (
-          <p className="text-slate-400 text-sm py-8 text-center">
+          <p className="text-muted-foreground text-sm py-8 text-center">
             No data available
           </p>
         ) : (
@@ -171,8 +172,8 @@ export default function DashboardCharts({
                 tickLine={false}
                 width={70}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]}>
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]} activeBar={{ fill: BLUE_ACTIVE }}>
                 <LabelList
                   dataKey="count"
                   position="right"
@@ -187,7 +188,7 @@ export default function DashboardCharts({
       {/* Chart 4: Top N Car Makes */}
       <ChartCard title={`Top ${topValuesCount} Car Makes in Collection`}>
         {topMakes.length === 0 ? (
-          <p className="text-slate-400 text-sm py-8 text-center">
+          <p className="text-muted-foreground text-sm py-8 text-center">
             No data available
           </p>
         ) : (
@@ -216,8 +217,8 @@ export default function DashboardCharts({
                 tickLine={false}
                 width={70}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]}>
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]} activeBar={{ fill: BLUE_ACTIVE }}>
                 <LabelList
                   dataKey="count"
                   position="right"

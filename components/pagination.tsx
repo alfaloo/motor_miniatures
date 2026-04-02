@@ -48,20 +48,20 @@ export function Pagination({
   return (
     <div className="flex items-center justify-center gap-1 mt-8">
       {currentPage > 1 ? (
-        <Button asChild variant="outline" size="icon" className="border-slate-700 bg-slate-800 hover:bg-slate-700">
+        <Button asChild variant="outline" size="icon" className="border-border bg-card hover:bg-secondary">
           <Link href={buildUrl(currentPage - 1, rest, pageParamName)}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
       ) : (
-        <Button variant="outline" size="icon" disabled className="border-slate-700 bg-slate-800 opacity-50">
+        <Button variant="outline" size="icon" disabled className="border-border bg-card opacity-50">
           <ChevronLeft className="h-4 w-4" />
         </Button>
       )}
 
       {pages.map((p, i) =>
         p === "ellipsis" ? (
-          <span key={`ellipsis-${i}`} className="px-2 text-slate-400">
+          <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">
             …
           </span>
         ) : (
@@ -73,7 +73,7 @@ export function Pagination({
             className={
               p === currentPage
                 ? "bg-blue-600 hover:bg-blue-700 border-blue-600"
-                : "border-slate-700 bg-slate-800 hover:bg-slate-700"
+                : "border-border bg-card hover:bg-secondary"
             }
           >
             {p !== currentPage ? (
@@ -86,13 +86,13 @@ export function Pagination({
       )}
 
       {currentPage < totalPages ? (
-        <Button asChild variant="outline" size="icon" className="border-slate-700 bg-slate-800 hover:bg-slate-700">
+        <Button asChild variant="outline" size="icon" className="border-border bg-card hover:bg-secondary">
           <Link href={buildUrl(currentPage + 1, rest, pageParamName)}>
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
       ) : (
-        <Button variant="outline" size="icon" disabled className="border-slate-700 bg-slate-800 opacity-50">
+        <Button variant="outline" size="icon" disabled className="border-border bg-card opacity-50">
           <ChevronRight className="h-4 w-4" />
         </Button>
       )}

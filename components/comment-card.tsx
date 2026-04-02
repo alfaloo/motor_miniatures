@@ -83,25 +83,25 @@ export function CommentCard({ comment }: CommentCardProps) {
 
   if (isEditing) {
     return (
-      <div className="rounded-xl border border-blue-500 bg-slate-800 p-4">
+      <div className="rounded-xl border border-blue-500 bg-card p-4">
         <form onSubmit={handleSave} className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Title</Label>
+            <Label className="text-foreground text-sm">Title</Label>
             <Input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               maxLength={64}
-              className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500"
+              className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500"
               required
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Description</Label>
+            <Label className="text-foreground text-sm">Description</Label>
             <Textarea
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={3}
-              className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 resize-none"
+              className="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500 resize-none"
               required
             />
           </div>
@@ -121,7 +121,7 @@ export function CommentCard({ comment }: CommentCardProps) {
               variant="outline"
               size="sm"
               onClick={handleCancelEdit}
-              className="border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-200"
+              className="border-border bg-secondary hover:bg-accent text-foreground"
             >
               Cancel
             </Button>
@@ -132,15 +132,15 @@ export function CommentCard({ comment }: CommentCardProps) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-800 p-4 space-y-2">
+    <div className="rounded-xl border border-border bg-card p-4 space-y-2">
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-medium text-white leading-tight">{comment.title}</h4>
+        <h4 className="font-medium text-foreground leading-tight">{comment.title}</h4>
         <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsEditing(true)}
-            className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary"
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -150,20 +150,20 @@ export function CommentCard({ comment }: CommentCardProps) {
                 variant="ghost"
                 size="icon"
                 disabled={isDeleting}
-                className="h-7 w-7 text-slate-400 hover:text-red-400 hover:bg-slate-700"
+                className="h-7 w-7 text-muted-foreground hover:text-red-400 hover:bg-secondary"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-slate-800 border border-slate-700">
+            <AlertDialogContent className="bg-card border border-border">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-white">Delete comment?</AlertDialogTitle>
-                <AlertDialogDescription className="text-slate-400">
+                <AlertDialogTitle className="text-foreground">Delete comment?</AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground">
                   Are you sure you want to delete this comment? This cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-slate-700 bg-slate-700 hover:bg-slate-600 text-slate-200">
+                <AlertDialogCancel className="border-border bg-secondary hover:bg-accent text-foreground">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
@@ -177,8 +177,8 @@ export function CommentCard({ comment }: CommentCardProps) {
           </AlertDialog>
         </div>
       </div>
-      <p className="text-sm text-slate-300 whitespace-pre-wrap">{comment.description}</p>
-      <p className="text-xs text-slate-500">{formatDate(comment.created_at)}</p>
+      <p className="text-sm text-foreground whitespace-pre-wrap">{comment.description}</p>
+      <p className="text-xs text-muted-foreground">{formatDate(comment.created_at)}</p>
     </div>
   );
 }
