@@ -59,6 +59,8 @@ export const items = pgTable(
     sold_year: integer("sold_year"),
     sold_month: integer("sold_month"),
 
+    is_wishlist: boolean("is_wishlist").notNull().default(false),
+
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("items_user_id_idx").on(table.user_id)]

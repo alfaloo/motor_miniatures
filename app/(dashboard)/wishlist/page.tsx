@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -9,9 +8,9 @@ import { CollectionGrid } from "@/components/collection-grid";
 import { ItemCardSkeletonGrid } from "@/components/item-card-skeleton";
 import { ToastOnMount } from "@/components/toast-on-mount";
 import { Pagination } from "@/components/pagination";
-import { Button } from "@/components/ui/button";
-import { CollectionPageClient } from "@/components/collection-page-client";
-import { PackageOpen, Plus } from "lucide-react";
+import { WishlistPageClient } from "./wishlist-page-client";
+import { PackageOpen } from "lucide-react";
+import { acquireItem } from "@/lib/actions/items";
 import {
   buildItemWhereConditions,
   hasActiveFilters,
@@ -20,7 +19,7 @@ import {
 
 const PAGE_SIZE = 12;
 
-async function CollectionItems({
+async function WishlistItems({
   userId,
   page,
   searchParams,
@@ -70,7 +69,7 @@ async function CollectionItems({
     }
   }
 
-  const whereConditions = buildItemWhereConditions(searchParams, userId, false);
+  const whereConditions = buildItemWhereConditions(searchParams, userId, true);
   const hasFilter = hasActiveFilters(searchParams);
 
   const allItems = await db
@@ -90,24 +89,17 @@ async function CollectionItems({
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <PackageOpen className="h-16 w-16 text-muted-foreground" />
         <div>
-          <h2 className="text-xl font-semibold text-foreground">No items yet</h2>
+          <h2 className="text-xl font-semibold text-foreground">Your wishlist is empty</h2>
           <p className="text-muted-foreground mt-1">
-            Start building your collection by adding your first item.
+            Add your first item to start tracking what you want to acquire.
           </p>
         </div>
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white mt-2">
-          <Link href="/items/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Add your first item
-          </Link>
-        </Button>
       </div>
     );
   }
 
   return (
     <>
-      {/* Items count — hidden when summary bar is visible (i.e. when filters are active) */}
       {!hasFilter && (
         <p className="text-sm text-muted-foreground">
           {totalItems} {totalItems === 1 ? "item" : "items"}
@@ -120,7 +112,7 @@ async function CollectionItems({
         </div>
       ) : (
         <>
-          <CollectionGrid items={pageItems} />
+          <CollectionGrid items={pageItems} onAcquire={acquireItem} />
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -134,7 +126,7 @@ async function CollectionItems({
   );
 }
 
-export default async function CollectionPage({
+export default async function WishlistPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string>>;
@@ -150,18 +142,15 @@ export default async function CollectionPage({
   const sortParam = params.sort ?? "purchase_date";
   const dirParam = params.dir ?? "desc";
 
-  // Fetch user's collectingSinceYear for filter panel year dropdowns
   const [userRow] = await db
     .select({ collecting_since_year: users.collecting_since_year })
     .from(users)
     .where(eq(users.id, session.user.id));
   const collectingSinceYear = userRow?.collecting_since_year ?? new Date().getFullYear();
 
-  // Extract active filter values for the filter panel and tag bar
   const activeFilters = extractActiveFilters(params);
   const filterActive = hasActiveFilters(params);
 
-  // Compute summary bar aggregate data server-side when filters are active
   let summaryData: {
     matchedCount: number;
     totalPurchaseValue: number;
@@ -169,7 +158,7 @@ export default async function CollectionPage({
   } | null = null;
 
   if (filterActive) {
-    const whereConditions = buildItemWhereConditions(params, session.user.id, false);
+    const whereConditions = buildItemWhereConditions(params, session.user.id, true);
     const [agg] = await db
       .select({
         count: sql<number>`count(*)::int`,
@@ -188,7 +177,7 @@ export default async function CollectionPage({
   return (
     <div className="space-y-6">
       <ToastOnMount toastKey={params.toast} />
-      <CollectionPageClient
+      <WishlistPageClient
         sortParam={sortParam}
         dirParam={dirParam}
         searchParams={params}
@@ -196,14 +185,14 @@ export default async function CollectionPage({
         activeFilters={activeFilters}
         summaryData={summaryData}
       >
-        <Suspense fallback={<ItemCardSkeletonGrid buttonCount={2} />}>
-          <CollectionItems
+        <Suspense fallback={<ItemCardSkeletonGrid />}>
+          <WishlistItems
             userId={session.user.id}
             page={page}
             searchParams={params}
           />
         </Suspense>
-      </CollectionPageClient>
+      </WishlistPageClient>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { items, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import DashboardCharts from "./dashboard-charts";
 
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
   const allItems = await db
     .select()
     .from(items)
-    .where(eq(items.user_id, userId));
+    .where(and(eq(items.user_id, userId), eq(items.is_wishlist, false)));
 
   // --- Stat cards ---
   const totalPurchaseValue = allItems.reduce(
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
   const netSpend = totalPurchaseValue - totalSoldValue;
   const modelsInCollection = allItems.filter((item) => !item.is_sold).length;
   const onPreorder = allItems.filter(
-    (item) => item.is_preorder && item.received_year === null
+    (item) => item.is_preorder && (item.received_year === null || item.received_month === null)
   ).length;
 
   const stats = [

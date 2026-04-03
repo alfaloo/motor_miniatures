@@ -49,6 +49,9 @@ interface CollectionPageClientProps {
   activeFilters: FilterValues;
   summaryData: SummaryData | null;
   children: React.ReactNode;
+  title?: string;
+  addItemHref?: string;
+  basePath?: string;
 }
 
 export function CollectionPageClient({
@@ -59,6 +62,9 @@ export function CollectionPageClient({
   activeFilters,
   summaryData,
   children,
+  title = "My Collection",
+  addItemHref = "/items/new",
+  basePath = "/",
 }: CollectionPageClientProps) {
   // Filter panel always starts closed on page load
   const [isOpen, setIsOpen] = useState(false);
@@ -79,7 +85,7 @@ export function CollectionPageClient({
       }
     }
     const qs = params.toString();
-    return qs ? `/?${qs}` : "/";
+    return qs ? `${basePath}?${qs}` : basePath;
   }
 
   function handleApply(filters: FilterValues) {
@@ -94,7 +100,7 @@ export function CollectionPageClient({
     if (searchParams.sort) params.set("sort", searchParams.sort);
     if (searchParams.dir) params.set("dir", searchParams.dir);
     const qs = params.toString();
-    router.push(qs ? `/?${qs}` : "/");
+    router.push(qs ? `${basePath}?${qs}` : basePath);
   }
 
   function handleRemoveTag(key: keyof FilterValues) {
@@ -107,32 +113,34 @@ export function CollectionPageClient({
     <div className="space-y-4">
       {/* Action bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-2xl font-bold text-foreground">My Collection</h1>
-        <div className="flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <SortControls
             currentSort={sortParam}
             currentDir={dirParam}
             searchParams={searchParams}
           />
-          <Button
-            variant="outline"
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="h-9 bg-card border-border text-foreground hover:bg-secondary"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-            {isOpen ? (
-              <ChevronUp className="h-4 w-4 ml-2" />
-            ) : (
-              <ChevronDown className="h-4 w-4 ml-2" />
-            )}
-          </Button>
-          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Link href="/items/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Link>
-          </Button>
+          <div className="flex flex-1 items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="flex-1 h-9 bg-card border-border text-foreground hover:bg-secondary"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filter</span>
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+            <Button asChild className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white">
+              <Link href={addItemHref}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Item</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 

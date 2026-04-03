@@ -1,4 +1,4 @@
-import { and, eq, ilike, isNull } from "drizzle-orm";
+import { and, eq, ilike, isNotNull, isNull, or } from "drizzle-orm";
 import { items } from "@/db/schema";
 import type { FilterValues } from "@/components/filter-panel";
 
@@ -31,9 +31,10 @@ export function extractActiveFilters(searchParams: Record<string, string>): Filt
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildItemWhereConditions(searchParams: Record<string, string>, userId: string): any[] {
+export function buildItemWhereConditions(searchParams: Record<string, string>, userId: string, isWishlist?: boolean): any[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const conditions: any[] = [eq(items.user_id, userId)];
+  if (isWishlist !== undefined) conditions.push(eq(items.is_wishlist, isWishlist));
   const fp = searchParams;
 
   if (isActiveFilter(fp.brand)) conditions.push(ilike(items.brand, `%${fp.brand}%`));
@@ -72,7 +73,18 @@ export function buildItemWhereConditions(searchParams: Record<string, string>, u
     if (!isNaN(v)) conditions.push(eq(items.purchase_month, v));
   }
   if (isActiveFilter(fp.is_preorder)) {
-    conditions.push(eq(items.is_preorder, fp.is_preorder === "yes"));
+    if (fp.is_preorder === "yes") {
+      conditions.push(eq(items.is_preorder, true));
+    } else if (fp.is_preorder === "no") {
+      conditions.push(eq(items.is_preorder, false));
+    } else if (fp.is_preorder === "awaiting") {
+      conditions.push(eq(items.is_preorder, true));
+      conditions.push(or(isNull(items.received_month), isNull(items.received_year)));
+    } else if (fp.is_preorder === "received") {
+      conditions.push(eq(items.is_preorder, true));
+      conditions.push(isNotNull(items.received_month));
+      conditions.push(isNotNull(items.received_year));
+    }
   }
   if (isActiveFilter(fp.received_year)) {
     const v = parseInt(fp.received_year!, 10);

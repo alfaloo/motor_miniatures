@@ -5,11 +5,18 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { ItemForm } from "@/components/item-form";
 
-export default async function NewItemPage() {
+export default async function NewItemPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ wishlist?: string }>;
+}) {
   const session = await auth();
   if (!session) {
     redirect("/login");
   }
+
+  const params = await searchParams;
+  const isWishlist = params.wishlist === "true";
 
   const userRow = await db
     .select({ collecting_since_year: users.collecting_since_year })
@@ -23,7 +30,7 @@ export default async function NewItemPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground mb-6">Add Item</h1>
-      <ItemForm collectingSinceYear={collectingSinceYear} />
+      <ItemForm collectingSinceYear={collectingSinceYear} isWishlist={isWishlist} />
     </div>
   );
 }

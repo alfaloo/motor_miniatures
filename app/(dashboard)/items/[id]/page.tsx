@@ -70,7 +70,7 @@ export default async function ViewItemPage({
   const start = (currentCommentPage - 1) * COMMENT_PAGE_SIZE;
   const pageComments = allComments.slice(start, start + COMMENT_PAGE_SIZE);
 
-  const showPreorder = item.is_preorder && item.received_year === null;
+  const showPreorder = item.is_preorder && (item.received_year === null || item.received_month === null);
 
   return (
     <div className="space-y-6">
@@ -78,8 +78,8 @@ export default async function ViewItemPage({
 
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">
-          Collection
+        <Link href={item.is_wishlist ? "/wishlist" : "/"} className="hover:text-foreground transition-colors">
+          {item.is_wishlist ? "Wishlist" : "Collection"}
         </Link>
         <ChevronRight className="h-4 w-4" />
         <span className="text-foreground">
@@ -178,23 +178,30 @@ export default async function ViewItemPage({
                   label="Date"
                   value={`${MONTHS[item.purchase_month - 1]} ${item.purchase_year}`}
                 />
-                <DetailRow
-                  label="Preorder"
-                  value={item.is_preorder ? "Yes" : "No"}
-                />
-                {item.is_preorder && (
-                  <DetailRow
-                    label="Received"
-                    value={
-                      item.received_year && item.received_month
-                        ? `${MONTHS[item.received_month - 1]} ${item.received_year}`
-                        : "Pending"
-                    }
-                  />
-                )}
               </dl>
             </CardContent>
           </Card>
+
+          {/* Preorder (only if item is a preorder) */}
+          {item.is_preorder && (
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-foreground">Preorder</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="divide-y divide-border">
+                  <DetailRow
+                    label="Received Date"
+                    value={
+                      item.received_year && item.received_month
+                        ? `${MONTHS[item.received_month - 1]} ${item.received_year}`
+                        : "Not Yet Received"
+                    }
+                  />
+                </dl>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Sale (only if relevant) */}
           {item.is_sold && (

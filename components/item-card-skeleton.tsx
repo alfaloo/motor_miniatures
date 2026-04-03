@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function ItemCardSkeleton() {
+export function ItemCardSkeleton({ buttonCount = 3 }: { buttonCount?: number }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
       {/* Top row: brand + scale */}
@@ -26,19 +26,19 @@ export function ItemCardSkeleton() {
 
       {/* Action row */}
       <div className="flex items-center gap-2 pt-1 mt-auto">
-        <Skeleton className="h-8 flex-1 bg-secondary" />
-        <Skeleton className="h-8 flex-1 bg-secondary" />
-        <Skeleton className="h-8 flex-1 bg-secondary" />
+        {Array.from({ length: buttonCount }, (_, i) => (
+          <Skeleton key={i} className="h-8 flex-1 bg-secondary" />
+        ))}
       </div>
     </div>
   );
 }
 
-export function ItemCardSkeletonGrid({ count = 12 }: { count?: number }) {
+export function ItemCardSkeletonGrid({ count = 12, buttonCount = 3 }: { count?: number; buttonCount?: number }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: count }, (_, i) => (
-        <ItemCardSkeleton key={i} />
+        <ItemCardSkeleton key={i} buttonCount={buttonCount} />
       ))}
     </div>
   );

@@ -41,6 +41,7 @@ export const itemSchema = z
     is_preorder: z.boolean(),
     received_year: z.number().int().optional().nullable(),
     received_month: z.number().int().optional().nullable(),
+    is_wishlist: z.boolean().default(false),
     is_sold: z.boolean(),
     sold_price: z.number().int().positive().optional().nullable(),
     sold_platform: z.string().optional().nullable(),
@@ -58,6 +59,32 @@ export const itemSchema = z
       .optional()
       .nullable(),
   })
+  .refine(
+    (data) => {
+      if (!data.is_preorder) {
+        return data.received_year == null && data.received_month == null;
+      }
+      return true;
+    },
+    {
+      message: "Received date must be empty when item is not a preorder",
+      path: ["received_year"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.is_preorder) {
+        const hasYear = data.received_year != null;
+        const hasMonth = data.received_month != null;
+        return hasYear === hasMonth;
+      }
+      return true;
+    },
+    {
+      message: "Both received year and month must be set together, or both left empty",
+      path: ["received_month"],
+    }
+  )
   .refine(
     (data) => {
       if (data.is_sold) {
