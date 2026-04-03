@@ -156,5 +156,6 @@ export async function deleteItem(id: string) {
   await db.delete(items).where(eq(items.id, id));
 
   revalidatePath("/");
+  revalidatePath("/wishlist");
   return { success: true };
 }

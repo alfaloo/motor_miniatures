@@ -35,6 +35,7 @@ interface ItemCardProps {
     purchase_month: number;
     is_preorder: boolean;
     received_year: number | null;
+    received_month: number | null;
     is_sold: boolean;
   };
   onDelete?: (id: string) => void;
@@ -44,7 +45,7 @@ interface ItemCardProps {
 export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
   const router = useRouter();
   const purchasedLabel = `${MONTHS[item.purchase_month - 1]} ${item.purchase_year}`;
-  const showPreorder = item.is_preorder && item.received_year === null;
+  const showPreorder = item.is_preorder && (item.received_year === null || item.received_month === null);
 
   function handleDelete() {
     if (onDelete) {
@@ -134,11 +135,14 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-border bg-secondary hover:bg-black/15 text-foreground">
+                <AlertDialogCancel
+                  className="border-border bg-secondary hover:bg-black/15 text-foreground"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleAcquire}
+                  onClick={(e) => { e.stopPropagation(); handleAcquire(); }}
                   className="bg-teal-600 hover:bg-teal-700 text-white"
                 >
                   Acquire
@@ -176,11 +180,14 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="border-border bg-secondary hover:bg-black/15 text-foreground">
+              <AlertDialogCancel
+                className="border-border bg-secondary hover:bg-black/15 text-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDelete}
+                onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Delete

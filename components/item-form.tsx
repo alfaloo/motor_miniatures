@@ -53,12 +53,16 @@ function getYearOptions(collectingSinceYear: number): number[] {
 export function ItemForm({ collectingSinceYear, initialData, itemId, isWishlist }: ItemFormProps) {
   const [isPreorder, setIsPreorder] = useState(initialData?.is_preorder ?? false);
   const [isSold, setIsSold] = useState(initialData?.is_sold ?? false);
+  const [receivedDefaults, setReceivedDefaults] = useState({
+    year: initialData?.received_year,
+    month: initialData?.received_month,
+    key: 0,
+  });
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema),
@@ -309,6 +313,7 @@ export function ItemForm({ collectingSinceYear, initialData, itemId, isWishlist 
               if (!val) {
                 setValue("received_year", null, { shouldValidate: false });
                 setValue("received_month", null, { shouldValidate: false });
+                setReceivedDefaults((prev) => ({ year: undefined, month: undefined, key: prev.key + 1 }));
               }
             }}
             className="border-border data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
@@ -318,11 +323,11 @@ export function ItemForm({ collectingSinceYear, initialData, itemId, isWishlist 
 
         {/* Received fields — shown only when is_preorder=true */}
         {isPreorder && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4 border-l-2 border-blue-600/40">
+          <div key={receivedDefaults.key} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4 border-l-2 border-blue-600/40">
             <div className="space-y-1">
               <Label htmlFor="received_year" className={labelClass}>Received Year</Label>
               <Select
-                defaultValue={initialData?.received_year != null ? String(initialData.received_year) : undefined}
+                defaultValue={receivedDefaults.year != null ? String(receivedDefaults.year) : undefined}
                 onValueChange={(v) => setValue("received_year", parseInt(v, 10), { shouldValidate: true })}
               >
                 <SelectTrigger id="received_year" className={inputClass}>
@@ -342,7 +347,7 @@ export function ItemForm({ collectingSinceYear, initialData, itemId, isWishlist 
             <div className="space-y-1">
               <Label htmlFor="received_month" className={labelClass}>Received Month</Label>
               <Select
-                defaultValue={initialData?.received_month != null ? String(initialData.received_month) : undefined}
+                defaultValue={receivedDefaults.month != null ? String(receivedDefaults.month) : undefined}
                 onValueChange={(v) => setValue("received_month", parseInt(v, 10), { shouldValidate: true })}
               >
                 <SelectTrigger id="received_month" className={inputClass}>

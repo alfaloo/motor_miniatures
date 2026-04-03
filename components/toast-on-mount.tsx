@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 const TOAST_MESSAGES: Record<string, { type: "success" | "error"; message: string }> = {
@@ -15,10 +15,13 @@ interface ToastOnMountProps {
 }
 
 export function ToastOnMount({ toastKey }: ToastOnMountProps) {
+  const shownRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!toastKey) return;
+    if (!toastKey || shownRef.current === toastKey) return;
     const entry = TOAST_MESSAGES[toastKey];
     if (!entry) return;
+    shownRef.current = toastKey;
     if (entry.type === "success") {
       toast.success(entry.message);
     } else {

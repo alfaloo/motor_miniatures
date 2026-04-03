@@ -106,7 +106,7 @@ export default async function EditItemPage({
           <p className="text-muted-foreground text-sm mb-4">
             Permanently delete this item and all its comments. This cannot be undone.
           </p>
-          <DeleteItemButton itemId={item.id} />
+          <DeleteItemButton itemId={item.id} isWishlist={item.is_wishlist} />
         </div>
       </div>
     </div>

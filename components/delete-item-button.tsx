@@ -20,9 +20,10 @@ import { deleteItem } from "@/lib/actions/items";
 
 interface DeleteItemButtonProps {
   itemId: string;
+  isWishlist?: boolean;
 }
 
-export function DeleteItemButton({ itemId }: DeleteItemButtonProps) {
+export function DeleteItemButton({ itemId, isWishlist }: DeleteItemButtonProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -31,8 +32,8 @@ export function DeleteItemButton({ itemId }: DeleteItemButtonProps) {
     startTransition(async () => {
       const result = await deleteItem(itemId);
       if (result?.success) {
-        toast.success("Item deleted");
-        router.push("/?toast=item_deleted");
+        const redirectPath = isWishlist ? "/wishlist?toast=item_deleted" : "/?toast=item_deleted";
+        router.push(redirectPath);
       } else if (result?.error) {
         toast.error(result.error);
       }

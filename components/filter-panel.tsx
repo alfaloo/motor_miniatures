@@ -325,7 +325,7 @@ export function FilterPanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground">Is Preorder</Label>
+            <Label className="text-foreground">Preorder Status</Label>
             <Select
               value={values.is_preorder ?? "any"}
               onValueChange={(v) => setSelect("is_preorder", v)}
@@ -341,6 +341,8 @@ export function FilterPanel({
                 <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="yes">Yes</SelectItem>
                 <SelectItem value="no">No</SelectItem>
+                <SelectItem value="awaiting">Awaiting</SelectItem>
+                <SelectItem value="received">Received</SelectItem>
               </SelectContent>
             </Select>
           </div>

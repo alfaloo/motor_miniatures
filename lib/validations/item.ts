@@ -61,6 +61,32 @@ export const itemSchema = z
   })
   .refine(
     (data) => {
+      if (!data.is_preorder) {
+        return data.received_year == null && data.received_month == null;
+      }
+      return true;
+    },
+    {
+      message: "Received date must be empty when item is not a preorder",
+      path: ["received_year"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.is_preorder) {
+        const hasYear = data.received_year != null;
+        const hasMonth = data.received_month != null;
+        return hasYear === hasMonth;
+      }
+      return true;
+    },
+    {
+      message: "Both received year and month must be set together, or both left empty",
+      path: ["received_month"],
+    }
+  )
+  .refine(
+    (data) => {
       if (data.is_sold) {
         return (
           data.sold_price != null &&

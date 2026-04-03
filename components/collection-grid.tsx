@@ -18,6 +18,7 @@ type ItemLike = {
   purchase_month: number;
   is_preorder: boolean;
   received_year: number | null;
+  received_month: number | null;
   is_sold: boolean;
 };
 
