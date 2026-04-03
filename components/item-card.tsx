@@ -119,7 +119,7 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-teal-700 bg-secondary hover:bg-teal-900/30 text-teal-400 text-xs h-8"
+                className="flex-1 min-w-0 border-border bg-secondary hover:bg-black/15 text-foreground text-xs h-8"
                 onClick={(e) => e.stopPropagation()}
               >
                 <PackageCheck className="h-3 w-3 mr-1" />
@@ -134,7 +134,7 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-border bg-secondary hover:bg-accent text-foreground">
+                <AlertDialogCancel className="border-border bg-secondary hover:bg-black/15 text-foreground">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
@@ -150,7 +150,7 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
         <Button
           variant="outline"
           size="sm"
-          className="flex-1 border-border bg-secondary hover:bg-accent text-foreground text-xs h-8"
+          className="flex-1 min-w-0 border-border bg-secondary hover:bg-black/15 text-foreground text-xs h-8"
           onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
         >
           <Pencil className="h-3 w-3 mr-1" />
@@ -161,7 +161,7 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 border-red-900 bg-secondary hover:bg-red-900/30 text-red-400 text-xs h-8"
+              className="flex-1 min-w-0 border-red-900 bg-secondary hover:bg-red-900/30 text-red-400 text-xs h-8"
               onClick={(e) => e.stopPropagation()}
             >
               <Trash2 className="h-3 w-3 mr-1" />
@@ -176,7 +176,7 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="border-border bg-secondary hover:bg-accent text-foreground">
+              <AlertDialogCancel className="border-border bg-secondary hover:bg-black/15 text-foreground">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction

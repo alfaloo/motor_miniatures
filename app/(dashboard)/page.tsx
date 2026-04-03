@@ -196,7 +196,7 @@ export default async function CollectionPage({
         activeFilters={activeFilters}
         summaryData={summaryData}
       >
-        <Suspense fallback={<ItemCardSkeletonGrid />}>
+        <Suspense fallback={<ItemCardSkeletonGrid buttonCount={2} />}>
           <CollectionItems
             userId={session.user.id}
             page={page}
