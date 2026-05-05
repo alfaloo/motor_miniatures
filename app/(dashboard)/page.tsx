@@ -24,10 +24,12 @@ async function CollectionItems({
   userId,
   page,
   searchParams,
+  currency,
 }: {
   userId: string;
   page: number;
   searchParams: Record<string, string>;
+  currency: string;
 }) {
   const sortParam = searchParams.sort;
   const dirParam = searchParams.dir;
@@ -120,7 +122,7 @@ async function CollectionItems({
         </div>
       ) : (
         <>
-          <CollectionGrid items={pageItems} />
+          <CollectionGrid items={pageItems} currency={currency} />
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -150,12 +152,13 @@ export default async function CollectionPage({
   const sortParam = params.sort ?? "purchase_date";
   const dirParam = params.dir ?? "desc";
 
-  // Fetch user's collectingSinceYear for filter panel year dropdowns
+  // Fetch user settings for filter panel year dropdowns and price formatting
   const [userRow] = await db
-    .select({ collecting_since_year: users.collecting_since_year })
+    .select({ collecting_since_year: users.collecting_since_year, currency: users.currency })
     .from(users)
     .where(eq(users.id, session.user.id));
   const collectingSinceYear = userRow?.collecting_since_year ?? new Date().getFullYear();
+  const currency = userRow?.currency ?? "USD";
 
   // Extract active filter values for the filter panel and tag bar
   const activeFilters = extractActiveFilters(params);
@@ -201,6 +204,7 @@ export default async function CollectionPage({
             userId={session.user.id}
             page={page}
             searchParams={params}
+            currency={currency}
           />
         </Suspense>
       </CollectionPageClient>

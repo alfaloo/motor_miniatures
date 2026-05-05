@@ -18,6 +18,7 @@ export const users = pgTable("users", {
     .notNull()
     .default(sql`EXTRACT(YEAR FROM NOW())::INTEGER`),
   theme: varchar("theme", { length: 8 }).notNull().default("dark"),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   months_look_back: integer("months_look_back").notNull().default(12),
   top_values_count: integer("top_values_count").notNull().default(12),
   created_at: timestamp("created_at").notNull().defaultNow(),

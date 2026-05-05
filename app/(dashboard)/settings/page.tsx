@@ -18,6 +18,7 @@ export default async function SettingsPage() {
       months_look_back: users.months_look_back,
       top_values_count: users.top_values_count,
       theme: users.theme,
+      currency: users.currency,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -30,6 +31,7 @@ export default async function SettingsPage() {
   // Normalise legacy "clock" value to the new "time" option
   const rawTheme = user?.theme ?? "dark";
   const theme = rawTheme === "clock" ? "time" : rawTheme;
+  const currency = user?.currency ?? "USD";
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -40,6 +42,7 @@ export default async function SettingsPage() {
         topValuesCount={topValuesCount}
         username={username}
         theme={theme}
+        currency={currency}
       />
     </div>
   );

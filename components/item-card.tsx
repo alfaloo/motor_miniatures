@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, PackageCheck } from "lucide-react";
+import { formatPrice } from "@/lib/currency";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -33,16 +34,19 @@ interface ItemCardProps {
     grade: number | null;
     purchase_year: number;
     purchase_month: number;
+    purchase_price: number;
     is_preorder: boolean;
     received_year: number | null;
     received_month: number | null;
     is_sold: boolean;
+    sold_price: number | null;
   };
+  currency: string;
   onDelete?: (id: string) => void;
   onAcquire?: (id: string) => void;
 }
 
-export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
+export function ItemCard({ item, currency, onDelete, onAcquire }: ItemCardProps) {
   const router = useRouter();
   const purchasedLabel = `${MONTHS[item.purchase_month - 1]} ${item.purchase_year}`;
   const showPreorder = item.is_preorder && (item.received_year === null || item.received_month === null);
@@ -111,6 +115,18 @@ export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
           )}
         </div>
       )}
+
+      {/* Prices */}
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="text-muted-foreground">
+          Buy: <span className="text-foreground font-medium">{formatPrice(item.purchase_price * 100, currency)}</span>
+        </span>
+        {item.is_sold && item.sold_price !== null && (
+          <span className="text-muted-foreground">
+            Sell: <span className="text-green-400 font-medium">{formatPrice(item.sold_price * 100, currency)}</span>
+          </span>
+        )}
+      </div>
 
       {/* Action row */}
       <div className="flex items-center gap-2 pt-1 mt-auto">
