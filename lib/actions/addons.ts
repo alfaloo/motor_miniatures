@@ -162,15 +162,18 @@ export async function createOption(
 ) {
   const session = await getSession();
 
-  await db.insert(addonOptions).values({
-    category_id: categoryId,
-    user_id: session.user.id,
-    name: name.trim(),
-    price: priceInCents,
-  });
+  const [newOption] = await db
+    .insert(addonOptions)
+    .values({
+      category_id: categoryId,
+      user_id: session.user.id,
+      name: name.trim(),
+      price: priceInCents,
+    })
+    .returning();
 
   revalidatePath("/marketplace");
-  return { success: true };
+  return { success: true, option: newOption };
 }
 
 export async function updateOption(
