@@ -11,8 +11,9 @@ import { MarketplaceListingSkeletonGrid } from "@/components/marketplace-listing
 import { AddonConfigPanel } from "@/components/addon-config-panel";
 import { MarketplacePageClient } from "@/components/marketplace-page-client";
 import { ToastOnMount } from "@/components/toast-on-mount";
+import { ShareLinkModal } from "@/components/share-link-modal";
 import { Button } from "@/components/ui/button";
-import { Tag, Plus, Share2 } from "lucide-react";
+import { Tag, Plus } from "lucide-react";
 
 async function ListingsGrid({
   userId,
@@ -105,14 +106,7 @@ export default async function MarketplacePage({
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-foreground">Marketplace</h1>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="border-border bg-secondary hover:bg-black/15 text-foreground gap-1.5"
-            disabled
-          >
-            <Share2 className="h-4 w-4" />
-            Share storefront
-          </Button>
+          <ShareLinkModal username={session.user.username} />
           <Link href="/marketplace/listings/new">
             <Button className="gap-1.5">
               <Plus className="h-4 w-4" />
