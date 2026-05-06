@@ -26,6 +26,7 @@ interface MarketplaceListingCardProps {
   currency: string;
   vendorMode: boolean;
   detailHref?: string;
+  displayImageUrl?: string | null;
 }
 
 export function MarketplaceListingCard({
@@ -33,6 +34,7 @@ export function MarketplaceListingCard({
   currency,
   vendorMode,
   detailHref,
+  displayImageUrl,
 }: MarketplaceListingCardProps) {
   const router = useRouter();
 
@@ -62,6 +64,16 @@ export function MarketplaceListingCard({
         </h3>
         <p className="text-sm text-muted-foreground mt-0.5">{listing.variant}</p>
       </div>
+
+      {displayImageUrl && (
+        <div className="w-full aspect-square overflow-hidden rounded-md">
+          <img
+            src={displayImageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
 
       <Separator className="bg-border" />
 
