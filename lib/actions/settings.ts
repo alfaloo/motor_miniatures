@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, userSocialLinks } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 
 export async function updateUserSettings(collectingSinceYear: number) {
   const session = await auth();
@@ -38,13 +39,11 @@ type FieldResult = "success" | "unchanged" | { error: string };
 export async function updateGeneralSettings(
   collectingSinceYear: number,
   monthsLookBack: number,
-  topValuesCount: number,
-  currency: string
+  topValuesCount: number
 ): Promise<{
   collectingSinceYear: FieldResult;
   monthsLookBack: FieldResult;
   topValuesCount: FieldResult;
-  currency: FieldResult;
 }> {
   const session = await auth();
   if (!session) {
@@ -56,7 +55,6 @@ export async function updateGeneralSettings(
       collecting_since_year: users.collecting_since_year,
       months_look_back: users.months_look_back,
       top_values_count: users.top_values_count,
-      currency: users.currency,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -67,12 +65,10 @@ export async function updateGeneralSettings(
     collectingSinceYear: FieldResult;
     monthsLookBack: FieldResult;
     topValuesCount: FieldResult;
-    currency: FieldResult;
   } = {
     collectingSinceYear: "unchanged",
     monthsLookBack: "unchanged",
     topValuesCount: "unchanged",
-    currency: "unchanged",
   };
 
   // Collecting Since Year
@@ -138,26 +134,72 @@ export async function updateGeneralSettings(
     }
   }
 
-  // Currency
-  const normalizedCurrency = currency.trim().toUpperCase();
-  if (normalizedCurrency !== current?.currency) {
-    if (!normalizedCurrency || normalizedCurrency.length > 3) {
-      results.currency = { error: "Currency must be 1–3 characters" };
-    } else {
-      try {
-        await db
-          .update(users)
-          .set({ currency: normalizedCurrency })
-          .where(eq(users.id, session.user.id));
-        results.currency = "success";
-      } catch {
-        results.currency = { error: "Failed to save Currency" };
-      }
-    }
-  }
-
   revalidatePath("/settings");
   return results;
+}
+
+const marketplaceSettingsSchema = z.object({
+  currency: z.string().regex(/^[A-Z]{3}$/, "Currency must be a 3-character uppercase string"),
+  phoneNumber: z.string().optional(),
+  emailAddress: z.string().optional(),
+  socialLinks: z.array(
+    z.object({
+      name: z.string().min(1, "Social link name cannot be empty"),
+      url: z.string().url("Social link URL must be a valid URL"),
+    })
+  ),
+});
+
+export async function updateMarketplaceSettings(data: {
+  currency: string;
+  phoneNumber?: string;
+  emailAddress?: string;
+  socialLinks: { name: string; url: string }[];
+}): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) {
+    redirect("/login");
+  }
+
+  const parsed = marketplaceSettingsSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  const { currency, phoneNumber, emailAddress, socialLinks } = parsed.data;
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({
+          currency,
+          phone_number: phoneNumber ?? null,
+          email_address: emailAddress ?? null,
+        })
+        .where(eq(users.id, session.user.id));
+
+      await tx
+        .delete(userSocialLinks)
+        .where(eq(userSocialLinks.user_id, session.user.id));
+
+      if (socialLinks.length > 0) {
+        await tx.insert(userSocialLinks).values(
+          socialLinks.map((link, index) => ({
+            user_id: session.user.id,
+            name: link.name,
+            url: link.url,
+            sort_order: index,
+          }))
+        );
+      }
+    });
+
+    revalidatePath("/settings");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save marketplace settings" };
+  }
 }
 
 export async function updateDisplaySettings(theme: string): Promise<{ success: boolean; error?: string }> {
