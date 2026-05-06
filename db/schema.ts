@@ -21,6 +21,8 @@ export const users = pgTable("users", {
   theme: varchar("theme", { length: 8 }).notNull().default("dark"),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   months_look_back: integer("months_look_back").notNull().default(12),
+  phone_number: varchar("phone_number", { length: 32 }),
+  email_address: varchar("email_address", { length: 256 }),
   top_values_count: integer("top_values_count").notNull().default(12),
   created_at: timestamp("created_at").notNull().defaultNow(),
 });
@@ -137,6 +139,7 @@ export const marketplaceListings = pgTable(
     is_made_to_order: boolean("is_made_to_order").notNull().default(false),
     preorder_wait_days: integer("preorder_wait_days"),
     total_price: integer("total_price").notNull(),
+    display_image_url: varchar("display_image_url", { length: 512 }),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("marketplace_listings_user_id_idx").on(table.user_id)]
@@ -157,6 +160,21 @@ export const listingAddons = pgTable(
   ]
 );
 
+export const userSocialLinks = pgTable(
+  "user_social_links",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    user_id: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 64 }).notNull(),
+    url: varchar("url", { length: 512 }).notNull(),
+    sort_order: integer("sort_order").notNull().default(0),
+    created_at: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("user_social_links_user_id_idx").on(table.user_id)]
+);
+
 // Type exports
 export type AddonCategory = typeof addonCategories.$inferSelect;
 export type NewAddonCategory = typeof addonCategories.$inferInsert;
@@ -167,3 +185,5 @@ export type MarketplaceListingInsert = typeof marketplaceListings.$inferInsert;
 export type NewMarketplaceListing = typeof marketplaceListings.$inferInsert;
 export type ListingAddon = typeof listingAddons.$inferSelect;
 export type NewListingAddon = typeof listingAddons.$inferInsert;
+export type UserSocialLink = typeof userSocialLinks.$inferSelect;
+export type NewUserSocialLink = typeof userSocialLinks.$inferInsert;
