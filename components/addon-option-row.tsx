@@ -20,17 +20,18 @@ interface AddonOptionRowProps {
   option: {
     id: string;
     name: string;
-    price: number; // cents
+    price: number;
   };
+  onUpdate?: (name: string, price: number) => void;
 }
 
-export function AddonOptionRow({ option }: AddonOptionRowProps) {
+export function AddonOptionRow({ option, onUpdate }: AddonOptionRowProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(option.name);
-  const [editPrice, setEditPrice] = useState(String(option.price / 100));
+  const [editPrice, setEditPrice] = useState(String(option.price));
   const [editError, setEditError] = useState<string | null>(null);
 
   const [warningOpen, setWarningOpen] = useState(false);
@@ -54,7 +55,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
 
   function handleEditStart() {
     setEditName(option.name);
-    setEditPrice(String(option.price / 100));
+    setEditPrice(String(option.price));
     setEditError(null);
     setIsEditing(true);
   }
@@ -65,24 +66,24 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
   }
 
   function handleEditSave() {
-    const priceFloat = parseFloat(editPrice);
+    const price = parseInt(editPrice, 10);
     if (!editName.trim()) {
       setEditError("Name is required");
       return;
     }
-    if (isNaN(priceFloat) || priceFloat < 0) {
-      setEditError("Price must be a non-negative number");
+    if (isNaN(price) || price < 0) {
+      setEditError("Price must be a non-negative integer");
       return;
     }
-    const priceInCents = Math.round(priceFloat * 100);
 
     startTransition(async () => {
-      const result = await updateOption(option.id, editName.trim(), priceInCents);
+      const result = await updateOption(option.id, editName.trim(), price);
       if ("error" in result) {
         setEditError((result as { error: string }).error);
       } else {
         setIsEditing(false);
         setEditError(null);
+        onUpdate?.(editName.trim(), price);
         toast.success("Option updated");
         router.refresh();
       }
@@ -130,7 +131,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
             onChange={(e) => setEditPrice(e.target.value)}
             placeholder="Price"
             min="0"
-            step="0.01"
+            step="1"
             className="h-8 text-sm bg-secondary border-border w-24"
             disabled={isPending}
           />
@@ -172,7 +173,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
         </button>
         <span className="flex-1 text-sm text-foreground">{option.name}</span>
         <span className="text-sm text-muted-foreground tabular-nums">
-          {(option.price / 100).toFixed(2)}
+          {option.price}
         </span>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button

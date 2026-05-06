@@ -95,10 +95,11 @@ export default async function MarketplacePage({
   const params = await searchParams;
 
   const [userRow] = await db
-    .select({ currency: users.currency })
+    .select({ currency: users.currency, username: users.username })
     .from(users)
     .where(eq(users.id, session.user.id));
   const currency = userRow?.currency ?? "USD";
+  const username = userRow?.username ?? session.user.username;
 
   return (
     <div className="space-y-6">
@@ -108,7 +109,7 @@ export default async function MarketplacePage({
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-foreground">Marketplace</h1>
         <div className="flex items-center gap-2">
-          <ShareLinkModal username={session.user.username} />
+          <ShareLinkModal username={username} />
           <Link href="/marketplace/listings/new">
             <Button className="gap-1.5">
               <Plus className="h-4 w-4" />

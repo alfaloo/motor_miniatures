@@ -31,7 +31,7 @@ interface AddonOption {
   id: string;
   category_id: string;
   name: string;
-  price: number; // cents
+  price: number;
 }
 
 interface ListingFormProps {
@@ -49,6 +49,7 @@ interface ListingFormProps {
     is_made_to_order?: boolean;
     preorder_wait_days?: number | null;
     addon_option_ids?: string[];
+    addon_option_quantities?: Record<string, number>;
   };
   listingId?: string;
   displayImageUrl?: string | null;
@@ -66,6 +67,9 @@ export function ListingForm({
   const [localOptions, setLocalOptions] = useState<AddonOption[]>(options);
   const [checkedAddonIds, setCheckedAddonIds] = useState<Set<string>>(
     new Set(initialData?.addon_option_ids ?? [])
+  );
+  const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>(
+    initialData?.addon_option_quantities ?? {}
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [isMadeToOrder, setIsPreorder] = useState(
@@ -128,7 +132,10 @@ export function ListingForm({
 
   // Running total
   const checkedAddons = localOptions.filter((o) => checkedAddonIds.has(o.id));
-  const runningTotal = checkedAddons.reduce((sum, o) => sum + o.price, 0);
+  const runningTotal = checkedAddons.reduce(
+    (sum, o) => sum + o.price * (addonQuantities[o.id] ?? 1),
+    0
+  );
 
   // Inline "create add-on" form state per category
   const [addOptionOpen, setAddOptionOpen] = useState<Record<string, boolean>>(
@@ -148,7 +155,7 @@ export function ListingForm({
   function handleAddOptionSubmit(categoryId: string) {
     const name = (addOptionName[categoryId] ?? "").trim();
     const priceStr = addOptionPrice[categoryId] ?? "";
-    const priceFloat = parseFloat(priceStr);
+    const price = parseInt(priceStr, 10);
 
     if (!name) {
       setAddOptionError((prev) => ({
@@ -157,18 +164,17 @@ export function ListingForm({
       }));
       return;
     }
-    if (isNaN(priceFloat) || priceFloat < 0) {
+    if (isNaN(price) || price < 0) {
       setAddOptionError((prev) => ({
         ...prev,
-        [categoryId]: "Price must be a non-negative number",
+        [categoryId]: "Price must be a non-negative integer",
       }));
       return;
     }
-    const priceInCents = Math.round(priceFloat * 100);
 
     startOptionTransition(async () => {
       try {
-        const result = await createOption(categoryId, name, priceInCents);
+        const result = await createOption(categoryId, name, price);
         if (result?.option) {
           const newOpt: AddonOption = {
             id: result.option.id,
@@ -213,6 +219,7 @@ export function ListingForm({
     }
     for (const id of checkedAddonIds) {
       formData.append("addon_option_ids", id);
+      formData.append("addon_option_quantities", String(addonQuantities[id] ?? 1));
     }
 
     if (listingId) {
@@ -579,6 +586,7 @@ export function ListingForm({
 
               {categoryOptions.map((opt) => {
                 const checked = checkedAddonIds.has(opt.id);
+                const qty = addonQuantities[opt.id] ?? 1;
                 return (
                   <div
                     key={opt.id}
@@ -592,6 +600,7 @@ export function ListingForm({
                           const next = new Set(prev);
                           if (val === true) {
                             next.add(opt.id);
+                            setAddonQuantities((q) => ({ ...q, [opt.id]: q[opt.id] ?? 1 }));
                           } else {
                             next.delete(opt.id);
                           }
@@ -609,6 +618,22 @@ export function ListingForm({
                     <span className="text-sm text-muted-foreground shrink-0">
                       {formatPrice(opt.price, currency)}
                     </span>
+                    {checked && (
+                      <Input
+                        type="number"
+                        value={qty}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val) && val >= 1) {
+                            setAddonQuantities((q) => ({ ...q, [opt.id]: val }));
+                          }
+                        }}
+                        min="1"
+                        step="1"
+                        className="h-7 text-sm bg-secondary border-border w-16 shrink-0"
+                        onClick={(e) => e.preventDefault()}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -651,7 +676,7 @@ export function ListingForm({
                       }
                       placeholder="Price"
                       min="0"
-                      step="0.01"
+                      step="1"
                       className="h-8 text-sm bg-secondary border-border w-24"
                       disabled={isOptionPending}
                     />

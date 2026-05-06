@@ -32,7 +32,7 @@ interface AddonOption {
   id: string;
   category_id: string;
   name: string;
-  price: number; // cents
+  price: number;
 }
 
 interface AddonConfigPanelProps {
@@ -138,21 +138,20 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
   function handleAddOptionSubmit(categoryId: string) {
     const name = (addOptionName[categoryId] ?? "").trim();
     const priceStr = addOptionPrice[categoryId] ?? "";
-    const priceFloat = parseFloat(priceStr);
+    const price = parseInt(priceStr, 10);
 
     if (!name) {
       setAddOptionError((prev) => ({ ...prev, [categoryId]: "Name is required" }));
       return;
     }
-    if (isNaN(priceFloat) || priceFloat < 0) {
-      setAddOptionError((prev) => ({ ...prev, [categoryId]: "Price must be a non-negative number" }));
+    if (isNaN(price) || price < 0) {
+      setAddOptionError((prev) => ({ ...prev, [categoryId]: "Price must be a non-negative integer" }));
       return;
     }
-    const priceInCents = Math.round(priceFloat * 100);
 
     startOptionTransition(async () => {
       try {
-        await createOption(categoryId, name, priceInCents);
+        await createOption(categoryId, name, price);
         setAddOptionName((prev) => ({ ...prev, [categoryId]: "" }));
         setAddOptionPrice((prev) => ({ ...prev, [categoryId]: "" }));
         setAddOptionOpen((prev) => ({ ...prev, [categoryId]: false }));
@@ -210,7 +209,18 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
                         <p className="text-xs text-muted-foreground py-1">No options yet.</p>
                       )}
                       {categoryOptions.map((opt) => (
-                        <AddonOptionRow key={opt.id} option={opt} />
+                        <AddonOptionRow
+                          key={opt.id}
+                          option={opt}
+                          onUpdate={(name, price) =>
+                            setLocalOptions((prev) => ({
+                              ...prev,
+                              [category.id]: prev[category.id].map((o) =>
+                                o.id === opt.id ? { ...o, name, price } : o
+                              ),
+                            }))
+                          }
+                        />
                       ))}
                     </SortableContext>
                   </DndContext>
@@ -240,7 +250,7 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
                           }
                           placeholder="Price"
                           min="0"
-                          step="0.01"
+                          step="1"
                           className="h-8 text-sm bg-secondary border-border w-24"
                           disabled={isOptionPending}
                         />

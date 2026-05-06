@@ -50,10 +50,16 @@ export default async function EditListingPage({
 
   const currency = userRow?.currency ?? "USD";
 
-  // Extract selected addon_option_ids from the listing's addon_groups
+  // Extract selected addon_option_ids and quantities from the listing's addon_groups
   const selectedAddonOptionIds = listing.addon_groups.flatMap((group) =>
     group.options.map((opt) => opt.id)
   );
+  const addonOptionQuantities: Record<string, number> = {};
+  for (const group of listing.addon_groups) {
+    for (const opt of group.options) {
+      addonOptionQuantities[opt.id] = opt.quantity;
+    }
+  }
 
   const initialData = {
     brand: listing.brand,
@@ -66,6 +72,7 @@ export default async function EditListingPage({
     is_made_to_order: listing.is_made_to_order,
     preorder_wait_days: listing.preorder_wait_days ?? null,
     addon_option_ids: selectedAddonOptionIds,
+    addon_option_quantities: addonOptionQuantities,
   };
 
   return (

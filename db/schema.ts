@@ -154,6 +154,7 @@ export const listingAddons = pgTable(
     addon_option_id: uuid("addon_option_id")
       .notNull()
       .references(() => addonOptions.id, { onDelete: "restrict" }),
+    quantity: integer("quantity").notNull().default(1),
   },
   (table) => [
     primaryKey({ columns: [table.listing_id, table.addon_option_id] }),

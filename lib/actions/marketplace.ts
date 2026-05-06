@@ -40,15 +40,17 @@ function parseFormData(formData: FormData) {
   return raw;
 }
 
-async function computeTotalPrice(addonOptionIds: string[]): Promise<number> {
-  if (addonOptionIds.length === 0) return 0;
+async function computeTotalPrice(addons: { id: string; quantity: number }[]): Promise<number> {
+  if (addons.length === 0) return 0;
 
-  const [result] = await db
-    .select({ total: sql<number>`COALESCE(SUM(${addonOptions.price}), 0)` })
+  const ids = addons.map((a) => a.id);
+  const prices = await db
+    .select({ id: addonOptions.id, price: addonOptions.price })
     .from(addonOptions)
-    .where(inArray(addonOptions.id, addonOptionIds));
+    .where(inArray(addonOptions.id, ids));
 
-  return Number(result?.total ?? 0);
+  const priceMap = new Map(prices.map((p) => [p.id, p.price]));
+  return addons.reduce((sum, a) => sum + (priceMap.get(a.id) ?? 0) * a.quantity, 0);
 }
 
 export async function createListing(formData: FormData) {
@@ -62,7 +64,16 @@ export async function createListing(formData: FormData) {
   }
 
   const data = parsed.data;
-  const totalPrice = await computeTotalPrice(data.addon_option_ids);
+  const rawQtys = formData.getAll("addon_option_quantities").map((s) => {
+    const n = parseInt(String(s), 10);
+    return isNaN(n) || n < 1 ? 1 : n;
+  });
+  const addonOptionsWithQty = data.addon_option_ids.map((id, i) => ({
+    id,
+    quantity: rawQtys[i] ?? 1,
+  }));
+
+  const totalPrice = await computeTotalPrice(addonOptionsWithQty);
 
   const [listing] = await db
     .insert(marketplaceListings)
@@ -81,11 +92,12 @@ export async function createListing(formData: FormData) {
     })
     .returning({ id: marketplaceListings.id });
 
-  if (data.addon_option_ids.length > 0) {
+  if (addonOptionsWithQty.length > 0) {
     await db.insert(listingAddons).values(
-      data.addon_option_ids.map((optionId) => ({
+      addonOptionsWithQty.map(({ id, quantity }) => ({
         listing_id: listing.id,
-        addon_option_id: optionId,
+        addon_option_id: id,
+        quantity,
       }))
     );
   }
@@ -120,7 +132,16 @@ export async function updateListing(id: string, formData: FormData) {
   }
 
   const data = parsed.data;
-  const totalPrice = await computeTotalPrice(data.addon_option_ids);
+  const rawQtys = formData.getAll("addon_option_quantities").map((s) => {
+    const n = parseInt(String(s), 10);
+    return isNaN(n) || n < 1 ? 1 : n;
+  });
+  const addonOptionsWithQty = data.addon_option_ids.map((id, i) => ({
+    id,
+    quantity: rawQtys[i] ?? 1,
+  }));
+
+  const totalPrice = await computeTotalPrice(addonOptionsWithQty);
 
   const removeImage = formData.get("remove_image") === "true";
   const newImageUrl = formData.get("display_image_url") as string | null;
@@ -133,15 +154,18 @@ export async function updateListing(id: string, formData: FormData) {
 
   // Diff listing_addons
   const currentJoins = await db
-    .select({ addon_option_id: listingAddons.addon_option_id })
+    .select({ addon_option_id: listingAddons.addon_option_id, quantity: listingAddons.quantity })
     .from(listingAddons)
     .where(eq(listingAddons.listing_id, id));
 
-  const currentIds = new Set(currentJoins.map((j) => j.addon_option_id));
-  const newIds = new Set(data.addon_option_ids);
+  const currentMap = new Map(currentJoins.map((j) => [j.addon_option_id, j.quantity]));
+  const newMap = new Map(addonOptionsWithQty.map((a) => [a.id, a.quantity]));
 
-  const toRemove = [...currentIds].filter((x) => !newIds.has(x));
-  const toAdd = [...newIds].filter((x) => !currentIds.has(x));
+  const toRemove = [...currentMap.keys()].filter((x) => !newMap.has(x));
+  const toAdd = [...newMap.entries()].filter(([x]) => !currentMap.has(x));
+  const toUpdate = [...newMap.entries()].filter(
+    ([x, qty]) => currentMap.has(x) && currentMap.get(x) !== qty
+  );
 
   await db
     .update(marketplaceListings)
@@ -173,11 +197,24 @@ export async function updateListing(id: string, formData: FormData) {
 
   if (toAdd.length > 0) {
     await db.insert(listingAddons).values(
-      toAdd.map((optionId) => ({
+      toAdd.map(([optionId, quantity]) => ({
         listing_id: id,
         addon_option_id: optionId,
+        quantity,
       }))
     );
+  }
+
+  for (const [addonId, quantity] of toUpdate) {
+    await db
+      .update(listingAddons)
+      .set({ quantity })
+      .where(
+        and(
+          eq(listingAddons.listing_id, id),
+          eq(listingAddons.addon_option_id, addonId)
+        )
+      );
   }
 
   revalidatePath("/marketplace");
@@ -273,6 +310,7 @@ type AddonOptionWithCategory = {
   id: string;
   name: string;
   price: number;
+  quantity: number;
   category_id: string;
   category_name: string;
 };
@@ -280,7 +318,7 @@ type AddonOptionWithCategory = {
 type ListingDetailAddonGroup = {
   category_id: string;
   category_name: string;
-  options: { id: string; name: string; price: number }[];
+  options: { id: string; name: string; price: number; quantity: number }[];
 };
 
 export type ListingDetail = {
@@ -315,6 +353,7 @@ export async function getListingDetail(id: string): Promise<ListingDetail | null
       id: addonOptions.id,
       name: addonOptions.name,
       price: addonOptions.price,
+      quantity: listingAddons.quantity,
       category_id: addonCategories.id,
       category_name: addonCategories.name,
       category_sort_order: addonCategories.sort_order,
@@ -345,6 +384,7 @@ export async function getListingDetail(id: string): Promise<ListingDetail | null
       id: addon.id,
       name: addon.name,
       price: addon.price,
+      quantity: addon.quantity,
     });
   }
 
