@@ -22,8 +22,14 @@ const navLinks = [
   { label: "Collection", href: "/" },
   { label: "Wishlist", href: "/wishlist" },
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Settings", href: "/settings" },
 ];
+
+function isLinkActive(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
 
 interface NavbarProps {
   username: string;
@@ -48,7 +54,7 @@ export function Navbar({ username }: NavbarProps) {
               key={link.href}
               href={link.href}
               className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                pathname === link.href
+                isLinkActive(link.href, pathname)
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
@@ -96,7 +102,7 @@ export function Navbar({ username }: NavbarProps) {
                       key={link.href}
                       href={link.href}
                       className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        pathname === link.href
+                        isLinkActive(link.href, pathname)
                           ? "bg-secondary text-foreground"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                       }`}
