@@ -33,6 +33,7 @@ export const listingSchema = z.object({
     z.number().int().positive("Expected wait must be a positive number").nullable().optional()
   ),
   addon_option_ids: z.array(z.string().uuid()).default([]),
+  display_image_url: z.string().url().optional(),
 }).superRefine((data, ctx) => {
   if (data.is_made_to_order && (data.preorder_wait_days == null || isNaN(data.preorder_wait_days))) {
     ctx.addIssue({
