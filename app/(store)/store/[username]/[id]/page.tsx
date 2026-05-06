@@ -64,9 +64,9 @@ export default async function PublicListingDetailPage({
           <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-xs">
             {listing.scale}
           </Badge>
-          {listing.is_preorder && (
+          {listing.is_made_to_order && (
             <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
-              Pre-order
+              Made to Order
             </Badge>
           )}
         </div>
@@ -87,9 +87,9 @@ export default async function PublicListingDetailPage({
             />
             <DetailRow
               label="Status"
-              value={listing.is_preorder ? "Pre-order" : "Ready Stock"}
+              value={listing.is_made_to_order ? "Made to Order" : "Ready Stock"}
             />
-            {listing.is_preorder && listing.preorder_wait_days != null && (
+            {listing.is_made_to_order && listing.preorder_wait_days != null && (
               <DetailRow
                 label="Expected Wait"
                 value={`${listing.preorder_wait_days} days`}

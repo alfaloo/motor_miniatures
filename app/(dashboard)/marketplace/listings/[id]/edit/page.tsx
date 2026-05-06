@@ -6,7 +6,7 @@ import { users, addonCategories, addonOptions } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { getListingDetail } from "@/lib/actions/marketplace";
 import { ListingForm } from "@/components/listing-form";
-import { ChevronLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export default async function EditListingPage({
   params,
@@ -63,22 +63,34 @@ export default async function EditListingPage({
     scale: listing.scale as "1/18" | "1/24" | "1/43" | "1/64",
     production_count: listing.production_count ?? undefined,
     description: listing.description ?? undefined,
-    is_preorder: listing.is_preorder,
+    is_made_to_order: listing.is_made_to_order,
     preorder_wait_days: listing.preorder_wait_days ?? null,
     addon_option_ids: selectedAddonOptionIds,
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/marketplace" className="hover:text-foreground transition-colors">
+          Marketplace
+        </Link>
+        <ChevronRight className="h-4 w-4" />
         <Link
           href={`/marketplace/listings/${id}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+          className="hover:text-foreground transition-colors text-foreground"
         >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Listing
+          {listing.brand} {listing.model}
         </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">Edit</span>
+      </nav>
+
+      <div>
         <h1 className="text-2xl font-bold text-foreground">Edit Listing</h1>
+        <p className="text-muted-foreground mt-1">
+          {listing.brand} {listing.model} — {listing.variant}
+        </p>
       </div>
 
       <ListingForm

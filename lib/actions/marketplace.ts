@@ -30,7 +30,7 @@ function parseFormData(formData: FormData) {
       ? Number(formData.get("production_count"))
       : undefined,
     description: (formData.get("description") as string) || undefined,
-    is_preorder: formData.get("is_preorder") === "true",
+    is_made_to_order: formData.get("is_made_to_order") === "true",
     preorder_wait_days: formData.get("preorder_wait_days")
       ? Number(formData.get("preorder_wait_days"))
       : null,
@@ -74,8 +74,8 @@ export async function createListing(formData: FormData) {
       scale: data.scale,
       production_count: data.production_count ?? null,
       description: data.description ?? null,
-      is_preorder: data.is_preorder,
-      preorder_wait_days: data.is_preorder ? (data.preorder_wait_days ?? null) : null,
+      is_made_to_order: data.is_made_to_order,
+      preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
     })
     .returning({ id: marketplaceListings.id });
@@ -143,8 +143,8 @@ export async function updateListing(id: string, formData: FormData) {
       scale: data.scale,
       production_count: data.production_count ?? null,
       description: data.description ?? null,
-      is_preorder: data.is_preorder,
-      preorder_wait_days: data.is_preorder ? (data.preorder_wait_days ?? null) : null,
+      is_made_to_order: data.is_made_to_order,
+      preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
     })
     .where(eq(marketplaceListings.id, id));
@@ -207,7 +207,7 @@ export async function getListings(userId: string) {
       model: marketplaceListings.model,
       variant: marketplaceListings.variant,
       scale: marketplaceListings.scale,
-      is_preorder: marketplaceListings.is_preorder,
+      is_made_to_order: marketplaceListings.is_made_to_order,
       total_price: marketplaceListings.total_price,
       created_at: marketplaceListings.created_at,
       addon_count: count(listingAddons.addon_option_id),
@@ -247,7 +247,7 @@ export type ListingDetail = {
   scale: string;
   production_count: number | null;
   description: string | null;
-  is_preorder: boolean;
+  is_made_to_order: boolean;
   preorder_wait_days: number | null;
   total_price: number;
   created_at: Date;

@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { users, addonCategories, addonOptions } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { ListingForm } from "@/components/listing-form";
-import { ChevronLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export default async function NewListingPage() {
   const session = await auth();
@@ -39,16 +39,16 @@ export default async function NewListingPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <Link
-          href="/marketplace"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Marketplace
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/marketplace" className="hover:text-foreground transition-colors">
+          Marketplace
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">New Listing</h1>
-      </div>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">New Listing</span>
+      </nav>
+
+      <h1 className="text-2xl font-bold text-foreground">New Listing</h1>
 
       <ListingForm
         categories={categories}

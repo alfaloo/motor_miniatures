@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { users, marketplaceListings, listingAddons } from "@/db/schema";
@@ -25,7 +24,7 @@ async function StorefrontGrid({
       model: marketplaceListings.model,
       variant: marketplaceListings.variant,
       scale: marketplaceListings.scale,
-      is_preorder: marketplaceListings.is_preorder,
+      is_made_to_order: marketplaceListings.is_made_to_order,
       total_price: marketplaceListings.total_price,
       created_at: marketplaceListings.created_at,
       addon_count: count(listingAddons.addon_option_id),
@@ -48,13 +47,13 @@ async function StorefrontGrid({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {listings.map((listing) => (
-        <Link key={listing.id} href={`/store/${username}/${listing.id}`} className="block">
-          <MarketplaceListingCard
-            listing={listing}
-            currency={currency}
-            vendorMode={false}
-          />
-        </Link>
+        <MarketplaceListingCard
+          key={listing.id}
+          listing={listing}
+          currency={currency}
+          vendorMode={false}
+          detailHref={`/store/${username}/${listing.id}`}
+        />
       ))}
     </div>
   );

@@ -45,7 +45,7 @@ interface ListingFormProps {
     scale?: "1/18" | "1/24" | "1/43" | "1/64";
     production_count?: number;
     description?: string;
-    is_preorder?: boolean;
+    is_made_to_order?: boolean;
     preorder_wait_days?: number | null;
     addon_option_ids?: string[];
   };
@@ -64,8 +64,8 @@ export function ListingForm({
     new Set(initialData?.addon_option_ids ?? [])
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [isPreorder, setIsPreorder] = useState(
-    initialData?.is_preorder ?? false
+  const [isMadeToOrder, setIsPreorder] = useState(
+    initialData?.is_made_to_order ?? false
   );
 
   const {
@@ -83,7 +83,7 @@ export function ListingForm({
       scale: initialData?.scale ?? undefined,
       production_count: initialData?.production_count ?? undefined,
       description: initialData?.description ?? "",
-      is_preorder: initialData?.is_preorder ?? false,
+      is_made_to_order: initialData?.is_made_to_order ?? false,
       preorder_wait_days: initialData?.preorder_wait_days ?? null,
       addon_option_ids: [],
     },
@@ -170,8 +170,8 @@ export function ListingForm({
     if (data.description) {
       formData.append("description", data.description);
     }
-    formData.append("is_preorder", String(data.is_preorder));
-    if (data.is_preorder && data.preorder_wait_days != null) {
+    formData.append("is_made_to_order", String(data.is_made_to_order));
+    if (data.is_made_to_order && data.preorder_wait_days != null) {
       formData.append("preorder_wait_days", String(data.preorder_wait_days));
     }
     for (const id of checkedAddonIds) {
@@ -349,28 +349,28 @@ export function ListingForm({
         <div className="space-y-3">
           <div className="flex items-center gap-3 pt-1">
             <Checkbox
-              id="is_preorder"
-              checked={isPreorder}
+              id="is_made_to_order"
+              checked={isMadeToOrder}
               onCheckedChange={(checked) => {
                 const val = checked === true;
                 setIsPreorder(val);
-                setValue("is_preorder", val, { shouldValidate: true });
+                setValue("is_made_to_order", val, { shouldValidate: true });
                 if (!val) {
                   setValue("preorder_wait_days", null);
                 }
               }}
               className="border-border data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
             />
-            <Label htmlFor="is_preorder" className={labelClass}>
-              Is Pre-order
+            <Label htmlFor="is_made_to_order" className={labelClass}>
+              Is Made to Order
             </Label>
           </div>
 
-          {isPreorder && (
+          {isMadeToOrder && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4 border-l-2 border-blue-600/40">
               <div className="space-y-1">
                 <Label htmlFor="preorder_wait_days" className={labelClass}>
-                  Expected Wait (days)
+                  Expected Wait (days) *
                 </Label>
                 <Input
                   id="preorder_wait_days"

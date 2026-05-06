@@ -27,13 +27,20 @@ export const listingSchema = z.object({
     z.number().int("Production count must be a whole number").positive("Production count must be a positive integer").optional()
   ),
   description: z.string().optional(),
-  is_preorder: z.boolean(),
-  preorder_wait_days: z
-    .number()
-    .int()
-    .optional()
-    .nullable(),
+  is_made_to_order: z.boolean(),
+  preorder_wait_days: z.preprocess(
+    (val) => (typeof val === "number" && isNaN(val) ? null : val),
+    z.number().int().positive("Expected wait must be a positive number").nullable().optional()
+  ),
   addon_option_ids: z.array(z.string().uuid()).default([]),
+}).superRefine((data, ctx) => {
+  if (data.is_made_to_order && (data.preorder_wait_days == null || isNaN(data.preorder_wait_days))) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please enter an expected wait time",
+      path: ["preorder_wait_days"],
+    });
+  }
 });
 
 export type ListingFormData = z.infer<typeof listingSchema>;

@@ -134,7 +134,7 @@ export const marketplaceListings = pgTable(
     scale: varchar("scale", { length: 8 }).notNull(), // '1/18' | '1/24' | '1/43' | '1/64'
     production_count: integer("production_count"),
     description: text("description"),
-    is_preorder: boolean("is_preorder").notNull().default(false),
+    is_made_to_order: boolean("is_made_to_order").notNull().default(false),
     preorder_wait_days: integer("preorder_wait_days"),
     total_price: integer("total_price").notNull(),
     created_at: timestamp("created_at").notNull().defaultNow(),

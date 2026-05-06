@@ -52,6 +52,7 @@ async function ListingsGrid({
           listing={listing}
           currency={currency}
           vendorMode={true}
+          detailHref={`/marketplace/listings/${listing.id}`}
         />
       ))}
     </div>

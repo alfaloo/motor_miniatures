@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DeleteListingButton } from "./delete-button";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -51,14 +51,18 @@ export default async function ListingDetailPage({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Back link */}
-      <Link
-        href="/marketplace"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        Back to Marketplace
-      </Link>
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/marketplace" className="hover:text-foreground transition-colors">
+          Marketplace
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">
+          {listing.brand} {listing.model}
+        </span>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">View</span>
+      </nav>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -70,9 +74,9 @@ export default async function ListingDetailPage({
             <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-xs">
               {listing.scale}
             </Badge>
-            {listing.is_preorder && (
+            {listing.is_made_to_order && (
               <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
-                Pre-order
+                Made to Order
               </Badge>
             )}
           </div>
@@ -108,9 +112,9 @@ export default async function ListingDetailPage({
             />
             <DetailRow
               label="Status"
-              value={listing.is_preorder ? "Pre-order" : "Ready Stock"}
+              value={listing.is_made_to_order ? "Made to Order" : "Ready Stock"}
             />
-            {listing.is_preorder && listing.preorder_wait_days != null && (
+            {listing.is_made_to_order && listing.preorder_wait_days != null && (
               <DetailRow
                 label="Expected Wait"
                 value={`${listing.preorder_wait_days} days`}

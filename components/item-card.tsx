@@ -116,18 +116,6 @@ export function ItemCard({ item, currency, onDelete, onAcquire }: ItemCardProps)
         </div>
       )}
 
-      {/* Prices */}
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-muted-foreground">
-          Buy: <span className="text-foreground font-medium">{formatPrice(item.purchase_price * 100, currency)}</span>
-        </span>
-        {item.is_sold && item.sold_price !== null && (
-          <span className="text-muted-foreground">
-            Sell: <span className="text-green-400 font-medium">{formatPrice(item.sold_price * 100, currency)}</span>
-          </span>
-        )}
-      </div>
-
       {/* Action row */}
       <div className="flex items-center gap-2 pt-1 mt-auto">
         {onAcquire && (
