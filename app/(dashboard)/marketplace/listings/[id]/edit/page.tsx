@@ -99,6 +99,7 @@ export default async function EditListingPage({
         currency={currency}
         initialData={initialData}
         listingId={id}
+        displayImageUrl={listing.display_image_url}
       />
     </div>
   );
