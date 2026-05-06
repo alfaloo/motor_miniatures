@@ -26,6 +26,6 @@ export const config = {
      * - /login and /register (public auth routes)
      * - api/auth (NextAuth internal routes)
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|login|register|api/auth).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|login|register|api/auth|store).*)",
   ],
 };

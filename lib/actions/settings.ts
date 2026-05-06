@@ -38,11 +38,13 @@ type FieldResult = "success" | "unchanged" | { error: string };
 export async function updateGeneralSettings(
   collectingSinceYear: number,
   monthsLookBack: number,
-  topValuesCount: number
+  topValuesCount: number,
+  currency: string
 ): Promise<{
   collectingSinceYear: FieldResult;
   monthsLookBack: FieldResult;
   topValuesCount: FieldResult;
+  currency: FieldResult;
 }> {
   const session = await auth();
   if (!session) {
@@ -54,6 +56,7 @@ export async function updateGeneralSettings(
       collecting_since_year: users.collecting_since_year,
       months_look_back: users.months_look_back,
       top_values_count: users.top_values_count,
+      currency: users.currency,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -64,10 +67,12 @@ export async function updateGeneralSettings(
     collectingSinceYear: FieldResult;
     monthsLookBack: FieldResult;
     topValuesCount: FieldResult;
+    currency: FieldResult;
   } = {
     collectingSinceYear: "unchanged",
     monthsLookBack: "unchanged",
     topValuesCount: "unchanged",
+    currency: "unchanged",
   };
 
   // Collecting Since Year
@@ -129,6 +134,24 @@ export async function updateGeneralSettings(
         results.topValuesCount = "success";
       } catch {
         results.topValuesCount = { error: "Failed to save Top Values to Display" };
+      }
+    }
+  }
+
+  // Currency
+  const normalizedCurrency = currency.trim().toUpperCase();
+  if (normalizedCurrency !== current?.currency) {
+    if (!normalizedCurrency || normalizedCurrency.length > 3) {
+      results.currency = { error: "Currency must be 1–3 characters" };
+    } else {
+      try {
+        await db
+          .update(users)
+          .set({ currency: normalizedCurrency })
+          .where(eq(users.id, session.user.id));
+        results.currency = "success";
+      } catch {
+        results.currency = { error: "Failed to save Currency" };
       }
     }
   }

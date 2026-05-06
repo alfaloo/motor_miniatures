@@ -16,18 +16,21 @@ type ItemLike = {
   grade: number | null;
   purchase_year: number;
   purchase_month: number;
+  purchase_price: number;
   is_preorder: boolean;
   received_year: number | null;
   received_month: number | null;
   is_sold: boolean;
+  sold_price: number | null;
 };
 
 interface CollectionGridProps {
   items: ItemLike[];
+  currency: string;
   onAcquire?: (id: string) => void;
 }
 
-export function CollectionGrid({ items, onAcquire }: CollectionGridProps) {
+export function CollectionGrid({ items, currency, onAcquire }: CollectionGridProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [optimisticItems, removeOptimistically] = useOptimistic(
@@ -53,7 +56,7 @@ export function CollectionGrid({ items, onAcquire }: CollectionGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {optimisticItems.map((item) => (
-        <ItemCard key={item.id} item={item} onDelete={handleDelete} onAcquire={onAcquire} />
+        <ItemCard key={item.id} item={item} currency={currency} onDelete={handleDelete} onAcquire={onAcquire} />
       ))}
     </div>
   );

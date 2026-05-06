@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, PackageCheck } from "lucide-react";
+import { formatPrice } from "@/lib/currency";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -33,16 +34,19 @@ interface ItemCardProps {
     grade: number | null;
     purchase_year: number;
     purchase_month: number;
+    purchase_price: number;
     is_preorder: boolean;
     received_year: number | null;
     received_month: number | null;
     is_sold: boolean;
+    sold_price: number | null;
   };
+  currency: string;
   onDelete?: (id: string) => void;
   onAcquire?: (id: string) => void;
 }
 
-export function ItemCard({ item, onDelete, onAcquire }: ItemCardProps) {
+export function ItemCard({ item, currency, onDelete, onAcquire }: ItemCardProps) {
   const router = useRouter();
   const purchasedLabel = `${MONTHS[item.purchase_month - 1]} ${item.purchase_year}`;
   const showPreorder = item.is_preorder && (item.received_year === null || item.received_month === null);

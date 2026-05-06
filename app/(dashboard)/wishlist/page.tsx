@@ -23,10 +23,12 @@ async function WishlistItems({
   userId,
   page,
   searchParams,
+  currency,
 }: {
   userId: string;
   page: number;
   searchParams: Record<string, string>;
+  currency: string;
 }) {
   const sortParam = searchParams.sort;
   const dirParam = searchParams.dir;
@@ -112,7 +114,7 @@ async function WishlistItems({
         </div>
       ) : (
         <>
-          <CollectionGrid items={pageItems} onAcquire={acquireItem} />
+          <CollectionGrid items={pageItems} currency={currency} onAcquire={acquireItem} />
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -143,10 +145,11 @@ export default async function WishlistPage({
   const dirParam = params.dir ?? "desc";
 
   const [userRow] = await db
-    .select({ collecting_since_year: users.collecting_since_year })
+    .select({ collecting_since_year: users.collecting_since_year, currency: users.currency })
     .from(users)
     .where(eq(users.id, session.user.id));
   const collectingSinceYear = userRow?.collecting_since_year ?? new Date().getFullYear();
+  const currency = userRow?.currency ?? "USD";
 
   const activeFilters = extractActiveFilters(params);
   const filterActive = hasActiveFilters(params);
@@ -190,6 +193,7 @@ export default async function WishlistPage({
             userId={session.user.id}
             page={page}
             searchParams={params}
+            currency={currency}
           />
         </Suspense>
       </WishlistPageClient>

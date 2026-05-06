@@ -22,6 +22,41 @@
       "when": 1775115937225,
       "tag": "0002_yielding_eternity",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777983839153,
+      "tag": "0003_dazzling_vargas",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777984012205,
+      "tag": "0004_square_nocturne",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778036292624,
+      "tag": "0005_tiny_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1746518400000,
+      "tag": "0006_listing_schema_update",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1746748800000,
+      "tag": "0007_rename_is_preorder_marketplace",
+      "breakpoints": true
     }
   ]
 }

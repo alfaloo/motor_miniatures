@@ -12,6 +12,7 @@ interface SettingsFormProps {
   topValuesCount: number;
   username: string;
   theme: string;
+  currency: string;
 }
 
 type FieldStatus = "idle" | "success" | "error";
@@ -30,6 +31,7 @@ export default function SettingsForm({
   topValuesCount,
   username,
   theme,
+  currency,
 }: SettingsFormProps) {
   const currentYear = new Date().getFullYear();
 
@@ -37,6 +39,7 @@ export default function SettingsForm({
   const [selectedYear, setSelectedYear] = useState(collectingSinceYear);
   const [monthsInput, setMonthsInput] = useState(String(monthsLookBack));
   const [topValuesInput, setTopValuesInput] = useState(String(topValuesCount));
+  const [currencyInput, setCurrencyInput] = useState(currency);
   const [isPendingGeneral, startGeneralTransition] = useTransition();
 
   const [yearStatus, setYearStatus] = useState<FieldStatus>("idle");
@@ -45,6 +48,8 @@ export default function SettingsForm({
   const [monthsError, setMonthsError] = useState<string | null>(null);
   const [topValuesStatus, setTopValuesStatus] = useState<FieldStatus>("idle");
   const [topValuesError, setTopValuesError] = useState<string | null>(null);
+  const [currencyStatus, setCurrencyStatus] = useState<FieldStatus>("idle");
+  const [currencyError, setCurrencyError] = useState<string | null>(null);
 
   // Account panel — username state
   const [usernameInput, setUsernameInput] = useState(username);
@@ -78,12 +83,14 @@ export default function SettingsForm({
     setYearError(null);
     setMonthsError(null);
     setTopValuesError(null);
+    setCurrencyError(null);
     setYearStatus("idle");
     setMonthsStatus("idle");
     setTopValuesStatus("idle");
+    setCurrencyStatus("idle");
 
     startGeneralTransition(async () => {
-      const results = await updateGeneralSettings(selectedYear, Number(monthsInput), Number(topValuesInput));
+      const results = await updateGeneralSettings(selectedYear, Number(monthsInput), Number(topValuesInput), currencyInput);
 
       // Collecting Since Year
       if (results.collectingSinceYear === "success") {
@@ -113,6 +120,17 @@ export default function SettingsForm({
       } else {
         setTopValuesStatus("error");
         setTopValuesError(results.topValuesCount.error);
+      }
+
+      // Currency
+      if (results.currency === "success") {
+        setCurrencyStatus("success");
+        setCurrencyInput((prev) => prev.trim().toUpperCase());
+      } else if (results.currency === "unchanged") {
+        setCurrencyStatus("idle");
+      } else {
+        setCurrencyStatus("error");
+        setCurrencyError(results.currency.error);
       }
     });
   }
@@ -256,6 +274,29 @@ export default function SettingsForm({
             {topValuesError && <p className="text-xs text-red-400">{topValuesError}</p>}
             <p className="text-xs text-muted-foreground">
               Applies to Model Brands in Collection and Car Makes in Collection charts
+            </p>
+          </div>
+
+          {/* Currency */}
+          <div className="space-y-2">
+            <Label htmlFor="currency" className="text-foreground">
+              Currency
+            </Label>
+            <input
+              id="currency"
+              type="text"
+              maxLength={3}
+              value={currencyInput}
+              onChange={(e) => {
+                setCurrencyInput(e.target.value.toUpperCase());
+                setCurrencyStatus("idle");
+                setCurrencyError(null);
+              }}
+              className={`w-full ${getInputClass(currencyStatus)}`}
+            />
+            {currencyError && <p className="text-xs text-red-400">{currencyError}</p>}
+            <p className="text-xs text-muted-foreground">
+              3-letter currency denomination (e.g. USD, SGD, RMB) shown next to all prices in the app.
             </p>
           </div>
 

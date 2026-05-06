@@ -7,6 +7,7 @@ import {
   timestamp,
   text,
   index,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -18,6 +19,7 @@ export const users = pgTable("users", {
     .notNull()
     .default(sql`EXTRACT(YEAR FROM NOW())::INTEGER`),
   theme: varchar("theme", { length: 8 }).notNull().default("dark"),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   months_look_back: integer("months_look_back").notNull().default(12),
   top_values_count: integer("top_values_count").notNull().default(12),
   created_at: timestamp("created_at").notNull().defaultNow(),
@@ -82,3 +84,86 @@ export const comments = pgTable(
   },
   (table) => [index("comments_item_id_idx").on(table.item_id)]
 );
+
+export const addonCategories = pgTable(
+  "addon_categories",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    user_id: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 64 }).notNull(),
+    sort_order: integer("sort_order").notNull().default(0),
+    created_at: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("addon_categories_user_id_idx").on(table.user_id)]
+);
+
+export const addonOptions = pgTable(
+  "addon_options",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    category_id: uuid("category_id")
+      .notNull()
+      .references(() => addonCategories.id, { onDelete: "cascade" }),
+    user_id: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 64 }).notNull(),
+    price: integer("price").notNull().default(0),
+    sort_order: integer("sort_order").notNull().default(0),
+    created_at: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("addon_options_category_id_idx").on(table.category_id),
+    index("addon_options_user_id_idx").on(table.user_id),
+  ]
+);
+
+export const marketplaceListings = pgTable(
+  "marketplace_listings",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    user_id: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    brand: varchar("brand", { length: 32 }).notNull(),
+    make: varchar("make", { length: 32 }).notNull(),
+    model: varchar("model", { length: 64 }).notNull(),
+    variant: varchar("variant", { length: 128 }).notNull(),
+    scale: varchar("scale", { length: 8 }).notNull(), // '1/18' | '1/24' | '1/43' | '1/64'
+    production_count: integer("production_count"),
+    description: text("description"),
+    is_made_to_order: boolean("is_made_to_order").notNull().default(false),
+    preorder_wait_days: integer("preorder_wait_days"),
+    total_price: integer("total_price").notNull(),
+    created_at: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("marketplace_listings_user_id_idx").on(table.user_id)]
+);
+
+export const listingAddons = pgTable(
+  "listing_addons",
+  {
+    listing_id: uuid("listing_id")
+      .notNull()
+      .references(() => marketplaceListings.id, { onDelete: "cascade" }),
+    addon_option_id: uuid("addon_option_id")
+      .notNull()
+      .references(() => addonOptions.id, { onDelete: "restrict" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.listing_id, table.addon_option_id] }),
+  ]
+);
+
+// Type exports
+export type AddonCategory = typeof addonCategories.$inferSelect;
+export type NewAddonCategory = typeof addonCategories.$inferInsert;
+export type AddonOption = typeof addonOptions.$inferSelect;
+export type NewAddonOption = typeof addonOptions.$inferInsert;
+export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
+export type MarketplaceListingInsert = typeof marketplaceListings.$inferInsert;
+export type NewMarketplaceListing = typeof marketplaceListings.$inferInsert;
+export type ListingAddon = typeof listingAddons.$inferSelect;
+export type NewListingAddon = typeof listingAddons.$inferInsert;

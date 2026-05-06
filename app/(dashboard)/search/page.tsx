@@ -98,9 +98,11 @@ function buildWhereConditions(userId: string, params: Record<string, string>): S
 async function SearchResults({
   userId,
   params,
+  currency,
 }: {
   userId: string;
   params: Record<string, string>;
+  currency: string;
 }) {
   const conditions = buildWhereConditions(userId, params);
   const whereClause = and(...conditions);
@@ -175,7 +177,7 @@ async function SearchResults({
       {resultItems.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {resultItems.map((item) => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard key={item.id} item={item} currency={currency} />
           ))}
         </div>
       )}
@@ -224,15 +226,16 @@ export default async function SearchPage({
     redirect("/login");
   }
 
-  // Fetch user's collecting_since_year
+  // Fetch user settings
   const userRows = await db
-    .select({ collecting_since_year: users.collecting_since_year })
+    .select({ collecting_since_year: users.collecting_since_year, currency: users.currency })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
 
   const collectingSinceYear =
     userRows[0]?.collecting_since_year ?? new Date().getFullYear();
+  const currency = userRows[0]?.currency ?? "USD";
 
   const params = await searchParams;
 
@@ -286,7 +289,7 @@ export default async function SearchPage({
       <SearchForm collectingSinceYear={collectingSinceYear} defaultValues={params} />
 
       <Suspense fallback={<SearchResultsSkeleton />}>
-        <SearchResults userId={session.user.id} params={params} />
+        <SearchResults userId={session.user.id} params={params} currency={currency} />
       </Suspense>
     </div>
   );
