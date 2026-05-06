@@ -4,9 +4,22 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Check, X } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createCategory, createOption } from "@/lib/actions/addons";
+import { createCategory, createOption, reorderCategories, reorderOptions } from "@/lib/actions/addons";
 import { AddonCategoryRow } from "@/components/addon-category-row";
 import { AddonOptionRow } from "@/components/addon-option-row";
 
@@ -30,6 +43,19 @@ interface AddonConfigPanelProps {
 export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps) {
   const router = useRouter();
 
+  // Local ordered state for optimistic reordering
+  const [localCategories, setLocalCategories] = useState<AddonCategory[]>(categories);
+  const [localOptions, setLocalOptions] = useState<Record<string, AddonOption[]>>(
+    () => {
+      const map: Record<string, AddonOption[]> = {};
+      for (const opt of options) {
+        if (!map[opt.category_id]) map[opt.category_id] = [];
+        map[opt.category_id].push(opt);
+      }
+      return map;
+    }
+  );
+
   // Accordion state: set of open category IDs
   const [openCategories, setOpenCategories] = useState<Set<string>>(
     new Set(categories.map((c) => c.id))
@@ -45,6 +71,36 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
       }
       return next;
     });
+  }
+
+  // DnD sensors — require 5px movement before activating drag
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    })
+  );
+
+  function handleCategoryDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = localCategories.findIndex((c) => c.id === active.id);
+    const newIndex = localCategories.findIndex((c) => c.id === over.id);
+    const next = arrayMove(localCategories, oldIndex, newIndex);
+    setLocalCategories(next);
+    reorderCategories(next.map((c) => c.id));
+  }
+
+  function handleOptionDragEnd(event: DragEndEvent, categoryId: string) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const categoryOptions = localOptions[categoryId] ?? [];
+    const oldIndex = categoryOptions.findIndex((o) => o.id === active.id);
+    const newIndex = categoryOptions.findIndex((o) => o.id === over.id);
+    const next = arrayMove(categoryOptions, oldIndex, newIndex);
+    setLocalOptions((prev) => ({ ...prev, [categoryId]: next }));
+    reorderOptions(categoryId, next.map((o) => o.id));
   }
 
   // Add category form state
@@ -109,111 +165,128 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
     });
   }
 
-  const optionsByCategory = options.reduce<Record<string, AddonOption[]>>((acc, opt) => {
-    if (!acc[opt.category_id]) acc[opt.category_id] = [];
-    acc[opt.category_id].push(opt);
-    return acc;
-  }, {});
-
   return (
     <div className="space-y-2">
-      {categories.length === 0 && (
+      {localCategories.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">
           No categories yet. Add one below.
         </p>
       )}
 
-      {categories.map((category) => {
-        const categoryOptions = optionsByCategory[category.id] ?? [];
-        const isOpen = openCategories.has(category.id);
-        const optFormOpen = addOptionOpen[category.id] ?? false;
-        const optError = addOptionError[category.id] ?? null;
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleCategoryDragEnd}
+      >
+        <SortableContext
+          items={localCategories.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2">
+            {localCategories.map((category) => {
+              const categoryOptions = localOptions[category.id] ?? [];
+              const isOpen = openCategories.has(category.id);
+              const optFormOpen = addOptionOpen[category.id] ?? false;
+              const optError = addOptionError[category.id] ?? null;
 
-        return (
-          <AddonCategoryRow
-            key={category.id}
-            category={category}
-            isOpen={isOpen}
-            onToggle={() => toggleCategory(category.id)}
-          >
-            {/* Options list */}
-            {categoryOptions.length === 0 && (
-              <p className="text-xs text-muted-foreground py-1">No options yet.</p>
-            )}
-            {categoryOptions.map((opt) => (
-              <AddonOptionRow key={opt.id} option={opt} />
-            ))}
+              return (
+                <AddonCategoryRow
+                  key={category.id}
+                  category={category}
+                  isOpen={isOpen}
+                  onToggle={() => toggleCategory(category.id)}
+                >
+                  {/* Options DnD list */}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(e) => handleOptionDragEnd(e, category.id)}
+                  >
+                    <SortableContext
+                      items={categoryOptions.map((o) => o.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {categoryOptions.length === 0 && (
+                        <p className="text-xs text-muted-foreground py-1">No options yet.</p>
+                      )}
+                      {categoryOptions.map((opt) => (
+                        <AddonOptionRow key={opt.id} option={opt} />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
 
-            {/* Add option inline form */}
-            {optFormOpen ? (
-              <div className="mt-2 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={addOptionName[category.id] ?? ""}
-                    onChange={(e) =>
-                      setAddOptionName((prev) => ({ ...prev, [category.id]: e.target.value }))
-                    }
-                    placeholder="Option name"
-                    className="h-8 text-sm bg-secondary border-border flex-1 min-w-0"
-                    disabled={isOptionPending}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddOptionSubmit(category.id);
-                      if (e.key === "Escape") setAddOptionOpen((prev) => ({ ...prev, [category.id]: false }));
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    value={addOptionPrice[category.id] ?? ""}
-                    onChange={(e) =>
-                      setAddOptionPrice((prev) => ({ ...prev, [category.id]: e.target.value }))
-                    }
-                    placeholder="Price"
-                    min="0"
-                    step="0.01"
-                    className="h-8 text-sm bg-secondary border-border w-24"
-                    disabled={isOptionPending}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-900/20 shrink-0"
-                    onClick={() => handleAddOptionSubmit(category.id)}
-                    disabled={isOptionPending}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-                    onClick={() =>
-                      setAddOptionOpen((prev) => ({ ...prev, [category.id]: false }))
-                    }
-                    disabled={isOptionPending}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                {optError && <p className="text-xs text-red-400">{optError}</p>}
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-1 h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
-                onClick={() => {
-                  setAddOptionOpen((prev) => ({ ...prev, [category.id]: true }));
-                  // Ensure category is open when adding option
-                  setOpenCategories((prev) => new Set([...prev, category.id]));
-                }}
-              >
-                <Plus className="h-3 w-3" />
-                Add option
-              </Button>
-            )}
-          </AddonCategoryRow>
-        );
-      })}
+                  {/* Add option inline form */}
+                  {optFormOpen ? (
+                    <div className="mt-2 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={addOptionName[category.id] ?? ""}
+                          onChange={(e) =>
+                            setAddOptionName((prev) => ({ ...prev, [category.id]: e.target.value }))
+                          }
+                          placeholder="Option name"
+                          className="h-8 text-sm bg-secondary border-border flex-1 min-w-0"
+                          disabled={isOptionPending}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleAddOptionSubmit(category.id);
+                            if (e.key === "Escape") setAddOptionOpen((prev) => ({ ...prev, [category.id]: false }));
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          value={addOptionPrice[category.id] ?? ""}
+                          onChange={(e) =>
+                            setAddOptionPrice((prev) => ({ ...prev, [category.id]: e.target.value }))
+                          }
+                          placeholder="Price"
+                          min="0"
+                          step="0.01"
+                          className="h-8 text-sm bg-secondary border-border w-24"
+                          disabled={isOptionPending}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-900/20 shrink-0"
+                          onClick={() => handleAddOptionSubmit(category.id)}
+                          disabled={isOptionPending}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                          onClick={() =>
+                            setAddOptionOpen((prev) => ({ ...prev, [category.id]: false }))
+                          }
+                          disabled={isOptionPending}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {optError && <p className="text-xs text-red-400">{optError}</p>}
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1 h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
+                      onClick={() => {
+                        setAddOptionOpen((prev) => ({ ...prev, [category.id]: true }));
+                        setOpenCategories((prev) => new Set([...prev, category.id]));
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add option
+                    </Button>
+                  )}
+                </AddonCategoryRow>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add category form */}
       <div className="pt-2">

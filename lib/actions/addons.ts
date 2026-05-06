@@ -314,6 +314,45 @@ export async function forceDeleteOption(id: string) {
   return { success: true };
 }
 
+export async function reorderCategories(orderedIds: string[]) {
+  const session = await getSession();
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    await db
+      .update(addonCategories)
+      .set({ sort_order: i })
+      .where(
+        and(
+          eq(addonCategories.id, orderedIds[i]),
+          eq(addonCategories.user_id, session.user.id)
+        )
+      );
+  }
+
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
+export async function reorderOptions(categoryId: string, orderedIds: string[]) {
+  const session = await getSession();
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    await db
+      .update(addonOptions)
+      .set({ sort_order: i })
+      .where(
+        and(
+          eq(addonOptions.id, orderedIds[i]),
+          eq(addonOptions.user_id, session.user.id),
+          eq(addonOptions.category_id, categoryId)
+        )
+      );
+  }
+
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
 export async function forceDeleteCategory(id: string) {
   const session = await getSession();
 

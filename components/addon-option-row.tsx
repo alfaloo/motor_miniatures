@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, GripVertical } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateOption, deleteOption, forceDeleteOption } from "@/lib/actions/addons";
@@ -34,6 +36,21 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
   const [warningOpen, setWarningOpen] = useState(false);
   const [affectedListings, setAffectedListings] = useState<AffectedListing[]>([]);
   const [isForceDeleting, startForceDeleteTransition] = useTransition();
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: option.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   function handleEditStart() {
     setEditName(option.name);
@@ -98,7 +115,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
 
   if (isEditing) {
     return (
-      <div className="flex flex-col gap-1.5 py-1">
+      <div ref={setNodeRef} style={style} className="flex flex-col gap-1.5 py-1">
         <div className="flex items-center gap-2">
           <Input
             value={editName}
@@ -143,7 +160,16 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
 
   return (
     <>
-      <div className="flex items-center gap-2 py-1 group">
+      <div ref={setNodeRef} style={style} className="flex items-center gap-2 py-1 group">
+        <button
+          type="button"
+          className="text-muted-foreground/40 hover:text-muted-foreground shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          {...attributes}
+          {...listeners}
+          tabIndex={-1}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
         <span className="flex-1 text-sm text-foreground">{option.name}</span>
         <span className="text-sm text-muted-foreground tabular-nums">
           {(option.price / 100).toFixed(2)}

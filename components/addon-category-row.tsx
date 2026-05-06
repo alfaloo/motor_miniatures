@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Trash2, Check, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Check, X, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateCategory, deleteCategory, forceDeleteCategory } from "@/lib/actions/addons";
@@ -40,6 +42,22 @@ export function AddonCategoryRow({
   const [warningOpen, setWarningOpen] = useState(false);
   const [affectedListings, setAffectedListings] = useState<AffectedListing[]>([]);
   const [isForceDeleting, startForceDeleteTransition] = useTransition();
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
 
   function handleEditStart(e: React.MouseEvent) {
     e.stopPropagation();
@@ -98,12 +116,28 @@ export function AddonCategoryRow({
 
   return (
     <>
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="border border-border rounded-lg overflow-hidden"
+      >
         {/* Header row */}
         <div
           className="flex items-center gap-2 px-4 py-3 bg-secondary/50 cursor-pointer hover:bg-secondary/80 transition-colors group"
           onClick={() => { if (!isEditing) onToggle(); }}
         >
+          {/* Drag handle */}
+          <button
+            type="button"
+            className="text-muted-foreground/40 hover:text-muted-foreground shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            onClick={(e) => e.stopPropagation()}
+            {...attributes}
+            {...listeners}
+            tabIndex={-1}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+
           <button
             type="button"
             className="text-muted-foreground shrink-0"

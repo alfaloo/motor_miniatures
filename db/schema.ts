@@ -93,6 +93,7 @@ export const addonCategories = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 64 }).notNull(),
+    sort_order: integer("sort_order").notNull().default(0),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("addon_categories_user_id_idx").on(table.user_id)]
@@ -110,6 +111,7 @@ export const addonOptions = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 64 }).notNull(),
     price: integer("price").notNull().default(0),
+    sort_order: integer("sort_order").notNull().default(0),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [

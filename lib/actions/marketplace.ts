@@ -9,7 +9,7 @@ import {
   addonOptions,
   addonCategories,
 } from "@/db/schema";
-import { eq, and, inArray, sql, desc, count } from "drizzle-orm";
+import { eq, and, inArray, sql, desc, asc, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { listingSchema } from "@/lib/validations/listing";
 
@@ -276,11 +276,19 @@ export async function getListingDetail(id: string): Promise<ListingDetail | null
       price: addonOptions.price,
       category_id: addonCategories.id,
       category_name: addonCategories.name,
+      category_sort_order: addonCategories.sort_order,
+      option_sort_order: addonOptions.sort_order,
     })
     .from(listingAddons)
     .innerJoin(addonOptions, eq(listingAddons.addon_option_id, addonOptions.id))
     .innerJoin(addonCategories, eq(addonOptions.category_id, addonCategories.id))
-    .where(eq(listingAddons.listing_id, id));
+    .where(eq(listingAddons.listing_id, id))
+    .orderBy(
+      asc(addonCategories.sort_order),
+      asc(addonCategories.created_at),
+      asc(addonOptions.sort_order),
+      asc(addonOptions.created_at)
+    );
 
   // Group add-ons by category
   const groupMap = new Map<string, ListingDetailAddonGroup>();

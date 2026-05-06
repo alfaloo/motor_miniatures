@@ -24,7 +24,7 @@ export default async function NewListingPage() {
       .select({ id: addonCategories.id, name: addonCategories.name })
       .from(addonCategories)
       .where(eq(addonCategories.user_id, session.user.id))
-      .orderBy(asc(addonCategories.created_at)),
+      .orderBy(asc(addonCategories.sort_order), asc(addonCategories.created_at)),
     db
       .select({
         id: addonOptions.id,
@@ -34,7 +34,7 @@ export default async function NewListingPage() {
       })
       .from(addonOptions)
       .where(eq(addonOptions.user_id, session.user.id))
-      .orderBy(asc(addonOptions.created_at)),
+      .orderBy(asc(addonOptions.sort_order), asc(addonOptions.created_at)),
   ]);
 
   return (

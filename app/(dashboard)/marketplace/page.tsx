@@ -64,7 +64,7 @@ async function AddonConfigPanelWrapper({ userId }: { userId: string }) {
       .select({ id: addonCategories.id, name: addonCategories.name })
       .from(addonCategories)
       .where(eq(addonCategories.user_id, userId))
-      .orderBy(asc(addonCategories.created_at)),
+      .orderBy(asc(addonCategories.sort_order), asc(addonCategories.created_at)),
     db
       .select({
         id: addonOptions.id,
@@ -74,7 +74,7 @@ async function AddonConfigPanelWrapper({ userId }: { userId: string }) {
       })
       .from(addonOptions)
       .where(eq(addonOptions.user_id, userId))
-      .orderBy(asc(addonOptions.created_at)),
+      .orderBy(asc(addonOptions.sort_order), asc(addonOptions.created_at)),
   ]);
 
   return <AddonConfigPanel categories={categories} options={options} />;
