@@ -12,6 +12,7 @@ import {
 import { eq, and, inArray, sql, desc, asc, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { listingSchema } from "@/lib/validations/listing";
+import { deleteListingImage } from "@/lib/blob";
 
 async function getSession() {
   const session = await auth();
@@ -90,7 +91,7 @@ export async function createListing(formData: FormData) {
   }
 
   revalidatePath("/marketplace");
-  redirect("/marketplace?toast=listing_created");
+  return { id: listing.id };
 }
 
 export async function updateListing(id: string, formData: FormData) {
@@ -121,6 +122,15 @@ export async function updateListing(id: string, formData: FormData) {
   const data = parsed.data;
   const totalPrice = await computeTotalPrice(data.addon_option_ids);
 
+  const removeImage = formData.get("remove_image") === "true";
+  const newImageUrl = formData.get("display_image_url") as string | null;
+
+  if (removeImage && existing.display_image_url) {
+    try { await deleteListingImage(existing.display_image_url); } catch {}
+  } else if (newImageUrl && existing.display_image_url && existing.display_image_url !== newImageUrl) {
+    try { await deleteListingImage(existing.display_image_url); } catch {}
+  }
+
   // Diff listing_addons
   const currentJoins = await db
     .select({ addon_option_id: listingAddons.addon_option_id })
@@ -146,6 +156,7 @@ export async function updateListing(id: string, formData: FormData) {
       is_made_to_order: data.is_made_to_order,
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
+      ...(removeImage ? { display_image_url: null } : newImageUrl ? { display_image_url: newImageUrl } : {}),
     })
     .where(eq(marketplaceListings.id, id));
 
@@ -194,7 +205,41 @@ export async function deleteListing(id: string) {
 
   await db.delete(marketplaceListings).where(eq(marketplaceListings.id, id));
 
+  if (existing.display_image_url) {
+    try {
+      await deleteListingImage(existing.display_image_url);
+    } catch {}
+  }
+
   revalidatePath("/marketplace");
+  return { success: true };
+}
+
+export async function updateListingImageUrl(listingId: string, url: string) {
+  const session = await getSession();
+
+  const [existing] = await db
+    .select({ id: marketplaceListings.id })
+    .from(marketplaceListings)
+    .where(
+      and(
+        eq(marketplaceListings.id, listingId),
+        eq(marketplaceListings.user_id, session.user.id)
+      )
+    )
+    .limit(1);
+
+  if (!existing) {
+    return { error: "Listing not found or access denied" };
+  }
+
+  await db
+    .update(marketplaceListings)
+    .set({ display_image_url: url })
+    .where(eq(marketplaceListings.id, listingId));
+
+  revalidatePath("/marketplace");
+  revalidatePath(`/marketplace/listings/${listingId}`);
   return { success: true };
 }
 
@@ -209,6 +254,7 @@ export async function getListings(userId: string) {
       scale: marketplaceListings.scale,
       is_made_to_order: marketplaceListings.is_made_to_order,
       total_price: marketplaceListings.total_price,
+      display_image_url: marketplaceListings.display_image_url,
       created_at: marketplaceListings.created_at,
       addon_count: count(listingAddons.addon_option_id),
     })
@@ -250,6 +296,7 @@ export type ListingDetail = {
   is_made_to_order: boolean;
   preorder_wait_days: number | null;
   total_price: number;
+  display_image_url: string | null;
   created_at: Date;
   addon_groups: ListingDetailAddonGroup[];
 };

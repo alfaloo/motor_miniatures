@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Check, X } from "lucide-react";
@@ -17,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { listingSchema, ListingFormData } from "@/lib/validations/listing";
-import { createListing, updateListing } from "@/lib/actions/marketplace";
+import { createListing, updateListing, updateListingImageUrl } from "@/lib/actions/marketplace";
 import { createOption } from "@/lib/actions/addons";
 import { formatPrice } from "@/lib/currency";
 
@@ -50,6 +51,7 @@ interface ListingFormProps {
     addon_option_ids?: string[];
   };
   listingId?: string;
+  displayImageUrl?: string | null;
 }
 
 export function ListingForm({
@@ -58,7 +60,9 @@ export function ListingForm({
   currency,
   initialData,
   listingId,
+  displayImageUrl,
 }: ListingFormProps) {
+  const router = useRouter();
   const [localOptions, setLocalOptions] = useState<AddonOption[]>(options);
   const [checkedAddonIds, setCheckedAddonIds] = useState<Set<string>>(
     new Set(initialData?.addon_option_ids ?? [])
@@ -67,6 +71,13 @@ export function ListingForm({
   const [isMadeToOrder, setIsPreorder] = useState(
     initialData?.is_made_to_order ?? false
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
+    displayImageUrl ?? null
+  );
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -88,6 +99,32 @@ export function ListingForm({
       addon_option_ids: [],
     },
   });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSize = 5 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      setImageError("Only JPG, PNG, and WebP images are allowed.");
+      setImageFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if (file.size > maxSize) {
+      setImageError("Image must be 5 MB or smaller.");
+      setImageFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setImageError(null);
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+    setRemoveImage(false);
+  }
 
   // Running total
   const checkedAddons = localOptions.filter((o) => checkedAddonIds.has(o.id));
@@ -178,16 +215,64 @@ export function ListingForm({
       formData.append("addon_option_ids", id);
     }
 
-    let result;
     if (listingId) {
-      result = await updateListing(listingId, formData);
+      // Update flow
+      if (removeImage) {
+        formData.append("remove_image", "true");
+      } else if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append("listingId", listingId);
+        uploadData.append("file", imageFile);
+        const uploadRes = await fetch("/api/listings/upload-image", {
+          method: "POST",
+          body: uploadData,
+        });
+        if (!uploadRes.ok) {
+          const { error } = await uploadRes.json().catch(() => ({ error: "Upload failed" }));
+          setFormError(error ?? "Image upload failed");
+          return;
+        }
+        const { url } = await uploadRes.json();
+        formData.append("display_image_url", url);
+      }
+      const result = await updateListing(listingId, formData);
+      if (result?.errors) {
+        const firstError = Object.values(result.errors).flat()[0];
+        setFormError(firstError ?? "An error occurred");
+      }
     } else {
-      result = await createListing(formData);
-    }
+      // Create flow
+      const createResult = await createListing(formData);
+      if (createResult?.errors) {
+        const firstError = Object.values(createResult.errors).flat()[0];
+        setFormError(firstError ?? "An error occurred");
+        return;
+      }
+      const newId = createResult?.id;
+      if (!newId) {
+        setFormError("Failed to create listing");
+        return;
+      }
 
-    if (result?.errors) {
-      const firstError = Object.values(result.errors).flat()[0];
-      setFormError(firstError ?? "An error occurred");
+      // Upload image only if one was selected
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append("listingId", newId);
+        uploadData.append("file", imageFile);
+        const uploadRes = await fetch("/api/listings/upload-image", {
+          method: "POST",
+          body: uploadData,
+        });
+        if (!uploadRes.ok) {
+          const { error } = await uploadRes.json().catch(() => ({ error: "Upload failed" }));
+          setFormError(error ?? "Image upload failed");
+          return;
+        }
+        const { url } = await uploadRes.json();
+        await updateListingImageUrl(newId, url);
+      }
+
+      router.push("/marketplace?toast=listing_created");
     }
   }
 
@@ -385,6 +470,79 @@ export function ListingForm({
                 )}
               </div>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Images Section */}
+      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <h2 className="text-foreground font-semibold text-lg">Images</h2>
+
+        <div className="space-y-2">
+          <Label htmlFor="display_image" className={labelClass}>
+            Display Image
+          </Label>
+
+          <input
+            ref={fileInputRef}
+            id="display_image"
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp"
+            onChange={handleFileChange}
+            className={`w-full rounded-md border border-border px-3 py-2 text-sm ${inputClass} file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-secondary file:text-foreground hover:file:bg-accent cursor-pointer`}
+          />
+
+          {imageError && <p className={errorClass}>{imageError}</p>}
+
+          <img
+            src={removeImage ? "/listing-placeholder.svg" : (imagePreviewUrl ?? "/listing-placeholder.svg")}
+            alt="Display image preview"
+            className="h-32 w-32 object-cover rounded-md mt-2"
+          />
+
+          {imageFile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 gap-1 px-2 pl-1"
+              onClick={() => {
+                setImageFile(null);
+                setImagePreviewUrl(displayImageUrl ?? null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+            >
+              <X className="h-3 w-3" />
+              Clear selection
+            </Button>
+          )}
+
+          {listingId && displayImageUrl && !imageFile && !removeImage && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 gap-1 px-2 pl-1"
+              onClick={() => setRemoveImage(true)}
+            >
+              <X className="h-3 w-3" />
+              Remove image
+            </Button>
+          )}
+
+          {removeImage && !imageFile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2 pl-1"
+              onClick={() => {
+                setRemoveImage(false);
+                setImagePreviewUrl(displayImageUrl ?? null);
+              }}
+            >
+              Undo remove
+            </Button>
           )}
         </div>
       </div>
