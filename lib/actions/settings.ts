@@ -150,27 +150,82 @@ const marketplaceSettingsSchema = z.object({
   ),
 });
 
+type SocialLinksResult =
+  | "success"
+  | "unchanged"
+  | { error: string; socialLinkIndex?: number; socialLinkField?: string };
+
 export async function updateMarketplaceSettings(data: {
   currency: string;
   phoneNumber?: string;
   emailAddress?: string;
   socialLinks: { name: string; url: string }[];
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{
+  currency: FieldResult;
+  phoneNumber: FieldResult;
+  emailAddress: FieldResult;
+  socialLinks: SocialLinksResult;
+}> {
   const session = await auth();
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
 
+  const results: {
+    currency: FieldResult;
+    phoneNumber: FieldResult;
+    emailAddress: FieldResult;
+    socialLinks: SocialLinksResult;
+  } = {
+    currency: "unchanged",
+    phoneNumber: "unchanged",
+    emailAddress: "unchanged",
+    socialLinks: "unchanged",
+  };
+
+  // Validate first — return per-field errors without touching the DB
   const parsed = marketplaceSettingsSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message };
+    for (const err of parsed.error.errors) {
+      const path = err.path;
+      if (path[0] === "currency") {
+        results.currency = { error: err.message };
+      } else if (path[0] === "socialLinks" && typeof path[1] === "number") {
+        results.socialLinks = {
+          error: err.message,
+          socialLinkIndex: path[1],
+          socialLinkField: path[2] as string,
+        };
+      }
+    }
+    return results;
   }
 
   const { currency, phoneNumber, emailAddress, socialLinks } = parsed.data;
 
-  try {
-    await db.transaction(async (tx) => {
-      await tx
+  // Fetch current values
+  const [current] = await db
+    .select({
+      currency: users.currency,
+      phone_number: users.phone_number,
+      email_address: users.email_address,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  const currentSocialLinks = await db
+    .select({ name: userSocialLinks.name, url: userSocialLinks.url })
+    .from(userSocialLinks)
+    .where(eq(userSocialLinks.user_id, session.user.id))
+    .orderBy(userSocialLinks.sort_order);
+
+  // Update user fields — only if at least one changed (single round-trip)
+  const currencyChanged = currency !== (current?.currency ?? "");
+  const phoneChanged = (phoneNumber ?? null) !== (current?.phone_number ?? null);
+  const emailChanged = (emailAddress ?? null) !== (current?.email_address ?? null);
+
+  if (currencyChanged || phoneChanged || emailChanged) {
+    try {
+      await db
         .update(users)
         .set({
           currency,
@@ -178,13 +233,31 @@ export async function updateMarketplaceSettings(data: {
           email_address: emailAddress ?? null,
         })
         .where(eq(users.id, session.user.id));
+      if (currencyChanged) results.currency = "success";
+      if (phoneChanged) results.phoneNumber = "success";
+      if (emailChanged) results.emailAddress = "success";
+    } catch (err) {
+      console.error("[updateMarketplaceSettings user fields]", err);
+      if (currencyChanged) results.currency = { error: "Failed to save currency" };
+      if (phoneChanged) results.phoneNumber = { error: "Failed to save phone number" };
+      if (emailChanged) results.emailAddress = { error: "Failed to save email address" };
+    }
+  }
 
-      await tx
-        .delete(userSocialLinks)
-        .where(eq(userSocialLinks.user_id, session.user.id));
+  // Update social links if changed
+  const socialLinksChanged =
+    socialLinks.length !== currentSocialLinks.length ||
+    socialLinks.some(
+      (link, i) =>
+        link.name !== currentSocialLinks[i]?.name ||
+        link.url !== currentSocialLinks[i]?.url
+    );
 
+  if (socialLinksChanged) {
+    try {
+      await db.delete(userSocialLinks).where(eq(userSocialLinks.user_id, session.user.id));
       if (socialLinks.length > 0) {
-        await tx.insert(userSocialLinks).values(
+        await db.insert(userSocialLinks).values(
           socialLinks.map((link, index) => ({
             user_id: session.user.id,
             name: link.name,
@@ -193,13 +266,15 @@ export async function updateMarketplaceSettings(data: {
           }))
         );
       }
-    });
-
-    revalidatePath("/settings");
-    return { success: true };
-  } catch {
-    return { success: false, error: "Failed to save marketplace settings" };
+      results.socialLinks = "success";
+    } catch (err) {
+      console.error("[updateMarketplaceSettings social links]", err);
+      results.socialLinks = { error: "Failed to save social links" };
+    }
   }
+
+  revalidatePath("/settings");
+  return results;
 }
 
 export async function updateDisplaySettings(theme: string): Promise<{ success: boolean; error?: string }> {

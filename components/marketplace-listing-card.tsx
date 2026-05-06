@@ -65,15 +65,13 @@ export function MarketplaceListingCard({
         <p className="text-sm text-muted-foreground mt-0.5">{listing.variant}</p>
       </div>
 
-      {displayImageUrl && (
-        <div className="w-full aspect-square overflow-hidden rounded-md">
-          <img
-            src={displayImageUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
+      <div className="w-full aspect-square overflow-hidden rounded-md">
+        <img
+          src={displayImageUrl ?? "/listing-placeholder.svg"}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
 
       <Separator className="bg-border" />
 

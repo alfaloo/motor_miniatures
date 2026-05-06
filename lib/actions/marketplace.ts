@@ -122,12 +122,13 @@ export async function updateListing(id: string, formData: FormData) {
   const data = parsed.data;
   const totalPrice = await computeTotalPrice(data.addon_option_ids);
 
-  // Handle display_image_url: delete old blob if replacing
+  const removeImage = formData.get("remove_image") === "true";
   const newImageUrl = formData.get("display_image_url") as string | null;
-  if (newImageUrl && existing.display_image_url && existing.display_image_url !== newImageUrl) {
-    try {
-      await deleteListingImage(existing.display_image_url);
-    } catch {}
+
+  if (removeImage && existing.display_image_url) {
+    try { await deleteListingImage(existing.display_image_url); } catch {}
+  } else if (newImageUrl && existing.display_image_url && existing.display_image_url !== newImageUrl) {
+    try { await deleteListingImage(existing.display_image_url); } catch {}
   }
 
   // Diff listing_addons
@@ -155,7 +156,7 @@ export async function updateListing(id: string, formData: FormData) {
       is_made_to_order: data.is_made_to_order,
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
-      ...(newImageUrl ? { display_image_url: newImageUrl } : {}),
+      ...(removeImage ? { display_image_url: null } : newImageUrl ? { display_image_url: newImageUrl } : {}),
     })
     .where(eq(marketplaceListings.id, id));
 

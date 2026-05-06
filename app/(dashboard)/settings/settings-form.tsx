@@ -62,8 +62,14 @@ export default function SettingsForm({
   const [socialLinksInput, setSocialLinksInput] = useState<{ name: string; url: string }[]>(initialSocialLinks);
   const [isPendingMarketplace, startMarketplaceTransition] = useTransition();
   const [currencyStatus, setCurrencyStatus] = useState<FieldStatus>("idle");
-  const [marketplaceStatus, setMarketplaceStatus] = useState<FieldStatus>("idle");
-  const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
+  const [currencyError, setCurrencyError] = useState<string | null>(null);
+  const [phoneStatus, setPhoneStatus] = useState<FieldStatus>("idle");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<FieldStatus>("idle");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [socialLinksStatus, setSocialLinksStatus] = useState<FieldStatus>("idle");
+  const [socialLinksError, setSocialLinksError] = useState<string | null>(null);
+  const [socialLinkErrors, setSocialLinkErrors] = useState<Record<number, { name?: boolean; url?: boolean }>>({});
 
   // Account panel — username state
   const [usernameInput, setUsernameInput] = useState(username);
@@ -138,9 +144,11 @@ export default function SettingsForm({
 
   function handleMarketplaceSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMarketplaceError(null);
-    setMarketplaceStatus("idle");
-    setCurrencyStatus("idle");
+    setCurrencyStatus("idle"); setCurrencyError(null);
+    setPhoneStatus("idle"); setPhoneError(null);
+    setEmailStatus("idle"); setEmailError(null);
+    setSocialLinksStatus("idle"); setSocialLinksError(null);
+    setSocialLinkErrors({});
 
     startMarketplaceTransition(async () => {
       const result = await updateMarketplaceSettings({
@@ -150,14 +158,42 @@ export default function SettingsForm({
         socialLinks: socialLinksInput,
       });
 
-      if (result.success) {
-        setMarketplaceStatus("success");
+      // Currency
+      if (result.currency === "success") {
         setCurrencyStatus("success");
         setCurrencyInput((prev) => prev.trim().toUpperCase());
-      } else {
-        setMarketplaceStatus("error");
-        setMarketplaceError(result.error ?? "Failed to save marketplace settings");
+      } else if (result.currency !== "unchanged") {
         setCurrencyStatus("error");
+        setCurrencyError(result.currency.error);
+      }
+
+      // Phone
+      if (result.phoneNumber === "success") {
+        setPhoneStatus("success");
+      } else if (result.phoneNumber !== "unchanged") {
+        setPhoneStatus("error");
+        setPhoneError(result.phoneNumber.error);
+      }
+
+      // Email
+      if (result.emailAddress === "success") {
+        setEmailStatus("success");
+      } else if (result.emailAddress !== "unchanged") {
+        setEmailStatus("error");
+        setEmailError(result.emailAddress.error);
+      }
+
+      // Social links
+      if (result.socialLinks === "success") {
+        setSocialLinksStatus("success");
+        setSocialLinkErrors({});
+      } else if (result.socialLinks !== "unchanged") {
+        setSocialLinksStatus("error");
+        setSocialLinksError(result.socialLinks.error);
+        const { socialLinkIndex, socialLinkField } = result.socialLinks;
+        if (socialLinkIndex !== undefined && socialLinkField) {
+          setSocialLinkErrors({ [socialLinkIndex]: { [socialLinkField]: true } });
+        }
       }
     });
   }
@@ -224,16 +260,28 @@ export default function SettingsForm({
 
   function addSocialLink() {
     setSocialLinksInput((prev) => [...prev, { name: "", url: "" }]);
+    setSocialLinksStatus("idle");
+    setSocialLinksError(null);
   }
 
   function removeSocialLink(index: number) {
     setSocialLinksInput((prev) => prev.filter((_, i) => i !== index));
+    setSocialLinksStatus("idle");
+    setSocialLinksError(null);
+    setSocialLinkErrors({});
   }
 
   function updateSocialLink(index: number, field: "name" | "url", value: string) {
     setSocialLinksInput((prev) =>
       prev.map((link, i) => (i === index ? { ...link, [field]: value } : link))
     );
+    setSocialLinksStatus("idle");
+    setSocialLinksError(null);
+    setSocialLinkErrors((prev) => {
+      if (!prev[index]?.[field]) return prev;
+      const updated = { ...prev[index], [field]: false };
+      return { ...prev, [index]: updated };
+    });
   }
 
   return (
@@ -341,10 +389,11 @@ export default function SettingsForm({
               onChange={(e) => {
                 setCurrencyInput(e.target.value.toUpperCase());
                 setCurrencyStatus("idle");
-                setMarketplaceError(null);
+                setCurrencyError(null);
               }}
               className={`w-full ${getInputClass(currencyStatus)}`}
             />
+            {currencyError && <p className="text-xs text-red-400">{currencyError}</p>}
             <p className="text-xs text-muted-foreground">
               3-letter currency denomination (e.g. USD, SGD, RMB) shown next to all prices in the app.
             </p>
@@ -362,11 +411,12 @@ export default function SettingsForm({
               value={phoneInput}
               onChange={(e) => {
                 setPhoneInput(e.target.value);
-                setMarketplaceStatus("idle");
-                setMarketplaceError(null);
+                setPhoneStatus("idle");
+                setPhoneError(null);
               }}
-              className={`w-full ${getInputClass("idle")}`}
+              className={`w-full ${getInputClass(phoneStatus)}`}
             />
+            {phoneError && <p className="text-xs text-red-400">{phoneError}</p>}
             <p className="text-xs text-muted-foreground">
               Optional. Displayed to buyers in the Contact Seller section.
             </p>
@@ -384,11 +434,12 @@ export default function SettingsForm({
               value={emailInput}
               onChange={(e) => {
                 setEmailInput(e.target.value);
-                setMarketplaceStatus("idle");
-                setMarketplaceError(null);
+                setEmailStatus("idle");
+                setEmailError(null);
               }}
-              className={`w-full ${getInputClass("idle")}`}
+              className={`w-full ${getInputClass(emailStatus)}`}
             />
+            {emailError && <p className="text-xs text-red-400">{emailError}</p>}
             <p className="text-xs text-muted-foreground">
               Optional. Displayed to buyers in the Contact Seller section.
             </p>
@@ -397,7 +448,13 @@ export default function SettingsForm({
           {/* Social Media Links */}
           <div className="space-y-2">
             <Label className="text-foreground">Social Media Links</Label>
-            <div className="space-y-2">
+            <div className={`space-y-2 ${
+              socialLinksStatus === "success" && Object.keys(socialLinkErrors).length === 0
+                ? "rounded-md ring-2 ring-green-500 p-1"
+                : socialLinksStatus === "error" && Object.keys(socialLinkErrors).length === 0
+                ? "rounded-md ring-2 ring-red-500 p-1"
+                : ""
+            }`}>
               {socialLinksInput.map((link, index) => (
                 <div key={index} className="flex gap-2 items-center">
                   <input
@@ -406,7 +463,7 @@ export default function SettingsForm({
                     value={link.name}
                     maxLength={64}
                     onChange={(e) => updateSocialLink(index, "name", e.target.value)}
-                    className={`flex-1 ${getInputClass("idle")}`}
+                    className={`flex-1 ${getInputClass(socialLinkErrors[index]?.name ? "error" : "idle")}`}
                   />
                   <input
                     type="text"
@@ -414,7 +471,7 @@ export default function SettingsForm({
                     value={link.url}
                     maxLength={512}
                     onChange={(e) => updateSocialLink(index, "url", e.target.value)}
-                    className={`flex-[2] ${getInputClass("idle")}`}
+                    className={`flex-[2] ${getInputClass(socialLinkErrors[index]?.url ? "error" : "idle")}`}
                   />
                   <Button
                     type="button"
@@ -428,6 +485,7 @@ export default function SettingsForm({
                 </div>
               ))}
             </div>
+            {socialLinksError && <p className="text-xs text-red-400">{socialLinksError}</p>}
             <Button
               type="button"
               variant="ghost"
@@ -439,11 +497,6 @@ export default function SettingsForm({
               Add social link
             </Button>
           </div>
-
-          {marketplaceError && <p className="text-xs text-red-400">{marketplaceError}</p>}
-          {marketplaceStatus === "success" && (
-            <p className="text-xs text-green-400">Marketplace settings saved.</p>
-          )}
 
           <Button type="submit" disabled={isPendingMarketplace}>
             {isPendingMarketplace ? "Saving..." : "Save Marketplace Settings"}

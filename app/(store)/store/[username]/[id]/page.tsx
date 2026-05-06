@@ -81,16 +81,6 @@ export default async function PublicListingDetailPage({
         {listing.variant && (
           <p className="text-sm text-muted-foreground">{listing.variant}</p>
         )}
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-xs">
-            {listing.scale}
-          </Badge>
-          {listing.is_made_to_order && (
-            <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
-              Made to Order
-            </Badge>
-          )}
-        </div>
       </div>
 
       {/* Two-column grid */}
@@ -100,7 +90,19 @@ export default async function PublicListingDetailPage({
           {/* Panel 1 — Details */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-foreground">Details</CardTitle>
+              <CardTitle className="text-base text-foreground flex items-center gap-3">
+                Details
+                <div className="flex items-center gap-2 ml-auto">
+                  <Badge variant="outline" className="border-border text-muted-foreground text-xs">
+                    {listing.scale}
+                  </Badge>
+                  {listing.is_made_to_order && (
+                    <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
+                      Made to Order
+                    </Badge>
+                  )}
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="divide-y divide-border">
@@ -175,19 +177,13 @@ export default async function PublicListingDetailPage({
         {/* Right column */}
         <div className="space-y-4">
           {/* Display image */}
-          {listing.display_image_url ? (
-            <div className="w-full aspect-square overflow-hidden rounded-xl border border-border">
-              <img
-                src={listing.display_image_url}
-                alt={`${listing.brand} ${listing.model}`}
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-          ) : (
-            <div className="w-full aspect-square rounded-xl border border-border bg-secondary flex items-center justify-center">
-              <span className="text-muted-foreground text-sm">No image</span>
-            </div>
-          )}
+          <div className="w-full aspect-square overflow-hidden rounded-xl border border-border">
+            <img
+              src={listing.display_image_url ?? "/listing-placeholder.svg"}
+              alt={`${listing.brand} ${listing.model}`}
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
 
           {/* Contact Seller */}
           <ContactSeller

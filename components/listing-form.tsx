@@ -76,6 +76,7 @@ export function ListingForm({
     displayImageUrl ?? null
   );
   const [imageError, setImageError] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -122,6 +123,7 @@ export function ListingForm({
     setImageError(null);
     setImageFile(file);
     setImagePreviewUrl(URL.createObjectURL(file));
+    setRemoveImage(false);
   }
 
   // Running total
@@ -193,12 +195,6 @@ export function ListingForm({
   async function onSubmit(data: ListingFormData) {
     setFormError(null);
 
-    // Require image on create
-    if (!listingId && !imageFile) {
-      setImageError("A display image is required.");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("brand", data.brand);
     formData.append("make", data.make);
@@ -221,7 +217,9 @@ export function ListingForm({
 
     if (listingId) {
       // Update flow
-      if (imageFile) {
+      if (removeImage) {
+        formData.append("remove_image", "true");
+      } else if (imageFile) {
         const uploadData = new FormData();
         uploadData.append("listingId", listingId);
         uploadData.append("file", imageFile);
@@ -256,22 +254,24 @@ export function ListingForm({
         return;
       }
 
-      // Upload image
-      const uploadData = new FormData();
-      uploadData.append("listingId", newId);
-      uploadData.append("file", imageFile!);
-      const uploadRes = await fetch("/api/listings/upload-image", {
-        method: "POST",
-        body: uploadData,
-      });
-      if (!uploadRes.ok) {
-        const { error } = await uploadRes.json().catch(() => ({ error: "Upload failed" }));
-        setFormError(error ?? "Image upload failed");
-        return;
+      // Upload image only if one was selected
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append("listingId", newId);
+        uploadData.append("file", imageFile);
+        const uploadRes = await fetch("/api/listings/upload-image", {
+          method: "POST",
+          body: uploadData,
+        });
+        if (!uploadRes.ok) {
+          const { error } = await uploadRes.json().catch(() => ({ error: "Upload failed" }));
+          setFormError(error ?? "Image upload failed");
+          return;
+        }
+        const { url } = await uploadRes.json();
+        await updateListingImageUrl(newId, url);
       }
-      const { url } = await uploadRes.json();
 
-      await updateListingImageUrl(newId, url);
       router.push("/marketplace?toast=listing_created");
     }
   }
@@ -480,8 +480,9 @@ export function ListingForm({
 
         <div className="space-y-2">
           <Label htmlFor="display_image" className={labelClass}>
-            Display Image {!listingId && "*"}
+            Display Image
           </Label>
+
           <input
             ref={fileInputRef}
             id="display_image"
@@ -490,13 +491,58 @@ export function ListingForm({
             onChange={handleFileChange}
             className={`w-full rounded-md border border-border px-3 py-2 text-sm ${inputClass} file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-secondary file:text-foreground hover:file:bg-accent cursor-pointer`}
           />
+
           {imageError && <p className={errorClass}>{imageError}</p>}
-          {imagePreviewUrl && (
-            <img
-              src={imagePreviewUrl}
-              alt="Display image preview"
-              className="h-32 w-32 object-cover rounded-md mt-2"
-            />
+
+          <img
+            src={removeImage ? "/listing-placeholder.svg" : (imagePreviewUrl ?? "/listing-placeholder.svg")}
+            alt="Display image preview"
+            className="h-32 w-32 object-cover rounded-md mt-2"
+          />
+
+          {imageFile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 gap-1 px-2 pl-1"
+              onClick={() => {
+                setImageFile(null);
+                setImagePreviewUrl(displayImageUrl ?? null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+            >
+              <X className="h-3 w-3" />
+              Clear selection
+            </Button>
+          )}
+
+          {listingId && displayImageUrl && !imageFile && !removeImage && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 gap-1 px-2 pl-1"
+              onClick={() => setRemoveImage(true)}
+            >
+              <X className="h-3 w-3" />
+              Remove image
+            </Button>
+          )}
+
+          {removeImage && !imageFile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2 pl-1"
+              onClick={() => {
+                setRemoveImage(false);
+                setImagePreviewUrl(displayImageUrl ?? null);
+              }}
+            >
+              Undo remove
+            </Button>
           )}
         </div>
       </div>
