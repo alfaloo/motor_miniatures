@@ -53,6 +53,7 @@ async function ListingsGrid({
           currency={currency}
           vendorMode={true}
           detailHref={`/marketplace/listings/${listing.id}`}
+          displayImageUrl={listing.display_image_url}
         />
       ))}
     </div>

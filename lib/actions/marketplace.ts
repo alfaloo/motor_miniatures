@@ -253,6 +253,7 @@ export async function getListings(userId: string) {
       scale: marketplaceListings.scale,
       is_made_to_order: marketplaceListings.is_made_to_order,
       total_price: marketplaceListings.total_price,
+      display_image_url: marketplaceListings.display_image_url,
       created_at: marketplaceListings.created_at,
       addon_count: count(listingAddons.addon_option_id),
     })
