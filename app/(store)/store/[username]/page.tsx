@@ -26,7 +26,6 @@ async function StorefrontGrid({
       variant: marketplaceListings.variant,
       scale: marketplaceListings.scale,
       is_preorder: marketplaceListings.is_preorder,
-      base_price: marketplaceListings.base_price,
       total_price: marketplaceListings.total_price,
       created_at: marketplaceListings.created_at,
       addon_count: count(listingAddons.addon_option_id),

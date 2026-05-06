@@ -98,16 +98,24 @@ export default async function ListingDetailPage({
         <CardContent className="pt-4">
           <dl className="divide-y divide-border">
             <DetailRow label="Scale" value={listing.scale} />
-            {listing.production_count !== null && (
-              <DetailRow
-                label="Production Count"
-                value={listing.production_count.toLocaleString()}
-              />
-            )}
+            <DetailRow
+              label="Production Count"
+              value={
+                listing.production_count !== null
+                  ? listing.production_count.toLocaleString()
+                  : "Made to order"
+              }
+            />
             <DetailRow
               label="Status"
               value={listing.is_preorder ? "Pre-order" : "Ready Stock"}
             />
+            {listing.is_preorder && listing.preorder_wait_days != null && (
+              <DetailRow
+                label="Expected Wait"
+                value={`${listing.preorder_wait_days} days`}
+              />
+            )}
           </dl>
         </CardContent>
       </Card>
@@ -129,12 +137,6 @@ export default async function ListingDetailPage({
       {/* Price breakdown card */}
       <div className="bg-card border border-border rounded-xl p-4 sm:p-6 space-y-3">
         <h2 className="text-base font-semibold text-foreground">Price Breakdown</h2>
-
-        {/* Base price */}
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Base price</span>
-          <span className="text-foreground">{formatPrice(listing.base_price, currency)}</span>
-        </div>
 
         {/* Add-on groups */}
         {listing.addon_groups.map((group) => (

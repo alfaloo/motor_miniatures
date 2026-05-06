@@ -135,7 +135,7 @@ export const marketplaceListings = pgTable(
     production_count: integer("production_count"),
     description: text("description"),
     is_preorder: boolean("is_preorder").notNull().default(false),
-    base_price: integer("base_price").notNull(),
+    preorder_wait_days: integer("preorder_wait_days"),
     total_price: integer("total_price").notNull(),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
@@ -163,6 +163,7 @@ export type NewAddonCategory = typeof addonCategories.$inferInsert;
 export type AddonOption = typeof addonOptions.$inferSelect;
 export type NewAddonOption = typeof addonOptions.$inferInsert;
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
+export type MarketplaceListingInsert = typeof marketplaceListings.$inferInsert;
 export type NewMarketplaceListing = typeof marketplaceListings.$inferInsert;
 export type ListingAddon = typeof listingAddons.$inferSelect;
 export type NewListingAddon = typeof listingAddons.$inferInsert;

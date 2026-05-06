@@ -22,14 +22,6 @@ async function getSession() {
 }
 
 async function recomputeTotalPrice(tx: DbTx, listingId: string) {
-  const [listing] = await tx
-    .select({ base_price: marketplaceListings.base_price })
-    .from(marketplaceListings)
-    .where(eq(marketplaceListings.id, listingId))
-    .limit(1);
-
-  if (!listing) return;
-
   const [result] = await tx
     .select({
       total: sql<number>`COALESCE(SUM(${addonOptions.price}), 0)`,
@@ -38,8 +30,7 @@ async function recomputeTotalPrice(tx: DbTx, listingId: string) {
     .innerJoin(addonOptions, eq(listingAddons.addon_option_id, addonOptions.id))
     .where(eq(listingAddons.listing_id, listingId));
 
-  const addonsSum = Number(result?.total ?? 0);
-  const totalPrice = listing.base_price + addonsSum;
+  const totalPrice = Number(result?.total ?? 0);
 
   await tx
     .update(marketplaceListings)

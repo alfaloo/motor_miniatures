@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const PREORDER_WAIT_DAY_OPTIONS = [7, 14, 21, 30, 45, 60, 90] as const;
+
 export const listingSchema = z.object({
   brand: z
     .string()
@@ -20,18 +22,17 @@ export const listingSchema = z.object({
   scale: z.enum(["1/18", "1/24", "1/43", "1/64"], {
     errorMap: () => ({ message: "Scale must be one of: 1/18, 1/24, 1/43, 1/64" }),
   }),
-  production_count: z
-    .number()
-    .int("Production count must be a whole number")
-    .positive("Production count must be a positive integer")
-    .optional()
-    .or(z.literal(undefined)),
+  production_count: z.preprocess(
+    (val) => (typeof val === "number" && isNaN(val) ? undefined : val),
+    z.number().int("Production count must be a whole number").positive("Production count must be a positive integer").optional()
+  ),
   description: z.string().optional(),
   is_preorder: z.boolean(),
-  base_price: z
+  preorder_wait_days: z
     .number()
-    .int("Base price must be a whole number")
-    .min(0, "Base price must be non-negative"),
+    .int()
+    .optional()
+    .nullable(),
   addon_option_ids: z.array(z.string().uuid()).default([]),
 });
 

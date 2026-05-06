@@ -64,7 +64,7 @@ export default async function EditListingPage({
     production_count: listing.production_count ?? undefined,
     description: listing.description ?? undefined,
     is_preorder: listing.is_preorder,
-    base_price: listing.base_price / 100,
+    preorder_wait_days: listing.preorder_wait_days ?? null,
     addon_option_ids: selectedAddonOptionIds,
   };
 
