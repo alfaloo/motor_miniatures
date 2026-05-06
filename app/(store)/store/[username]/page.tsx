@@ -27,6 +27,7 @@ async function StorefrontGrid({
       is_made_to_order: marketplaceListings.is_made_to_order,
       total_price: marketplaceListings.total_price,
       created_at: marketplaceListings.created_at,
+      display_image_url: marketplaceListings.display_image_url,
       addon_count: count(listingAddons.addon_option_id),
     })
     .from(marketplaceListings)
@@ -53,6 +54,7 @@ async function StorefrontGrid({
           currency={currency}
           vendorMode={false}
           detailHref={`/store/${username}/${listing.id}`}
+          displayImageUrl={listing.display_image_url}
         />
       ))}
     </div>
