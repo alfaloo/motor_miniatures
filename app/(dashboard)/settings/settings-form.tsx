@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useTheme } from "next-themes";
-import { updateGeneralSettings, updateDisplaySettings, updateUsername, updatePassword } from "@/lib/actions/settings";
+import { updateGeneralSettings, updateDisplaySettings, updateUsername, updatePassword, updateMarketplaceSettings } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Plus, X } from "lucide-react";
 
 interface SettingsFormProps {
   collectingSinceYear: number;
@@ -13,6 +14,9 @@ interface SettingsFormProps {
   username: string;
   theme: string;
   currency: string;
+  phoneNumber: string;
+  emailAddress: string;
+  socialLinks: { name: string; url: string }[];
 }
 
 type FieldStatus = "idle" | "success" | "error";
@@ -32,6 +36,9 @@ export default function SettingsForm({
   username,
   theme,
   currency,
+  phoneNumber,
+  emailAddress,
+  socialLinks: initialSocialLinks,
 }: SettingsFormProps) {
   const currentYear = new Date().getFullYear();
 
@@ -39,7 +46,6 @@ export default function SettingsForm({
   const [selectedYear, setSelectedYear] = useState(collectingSinceYear);
   const [monthsInput, setMonthsInput] = useState(String(monthsLookBack));
   const [topValuesInput, setTopValuesInput] = useState(String(topValuesCount));
-  const [currencyInput, setCurrencyInput] = useState(currency);
   const [isPendingGeneral, startGeneralTransition] = useTransition();
 
   const [yearStatus, setYearStatus] = useState<FieldStatus>("idle");
@@ -48,8 +54,16 @@ export default function SettingsForm({
   const [monthsError, setMonthsError] = useState<string | null>(null);
   const [topValuesStatus, setTopValuesStatus] = useState<FieldStatus>("idle");
   const [topValuesError, setTopValuesError] = useState<string | null>(null);
+
+  // Marketplace panel state
+  const [currencyInput, setCurrencyInput] = useState(currency);
+  const [phoneInput, setPhoneInput] = useState(phoneNumber);
+  const [emailInput, setEmailInput] = useState(emailAddress);
+  const [socialLinksInput, setSocialLinksInput] = useState<{ name: string; url: string }[]>(initialSocialLinks);
+  const [isPendingMarketplace, startMarketplaceTransition] = useTransition();
   const [currencyStatus, setCurrencyStatus] = useState<FieldStatus>("idle");
-  const [currencyError, setCurrencyError] = useState<string | null>(null);
+  const [marketplaceStatus, setMarketplaceStatus] = useState<FieldStatus>("idle");
+  const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
 
   // Account panel — username state
   const [usernameInput, setUsernameInput] = useState(username);
@@ -83,14 +97,12 @@ export default function SettingsForm({
     setYearError(null);
     setMonthsError(null);
     setTopValuesError(null);
-    setCurrencyError(null);
     setYearStatus("idle");
     setMonthsStatus("idle");
     setTopValuesStatus("idle");
-    setCurrencyStatus("idle");
 
     startGeneralTransition(async () => {
-      const results = await updateGeneralSettings(selectedYear, Number(monthsInput), Number(topValuesInput), currencyInput);
+      const results = await updateGeneralSettings(selectedYear, Number(monthsInput), Number(topValuesInput));
 
       // Collecting Since Year
       if (results.collectingSinceYear === "success") {
@@ -121,16 +133,31 @@ export default function SettingsForm({
         setTopValuesStatus("error");
         setTopValuesError(results.topValuesCount.error);
       }
+    });
+  }
 
-      // Currency
-      if (results.currency === "success") {
+  function handleMarketplaceSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMarketplaceError(null);
+    setMarketplaceStatus("idle");
+    setCurrencyStatus("idle");
+
+    startMarketplaceTransition(async () => {
+      const result = await updateMarketplaceSettings({
+        currency: currencyInput,
+        phoneNumber: phoneInput || undefined,
+        emailAddress: emailInput || undefined,
+        socialLinks: socialLinksInput,
+      });
+
+      if (result.success) {
+        setMarketplaceStatus("success");
         setCurrencyStatus("success");
         setCurrencyInput((prev) => prev.trim().toUpperCase());
-      } else if (results.currency === "unchanged") {
-        setCurrencyStatus("idle");
       } else {
+        setMarketplaceStatus("error");
+        setMarketplaceError(result.error ?? "Failed to save marketplace settings");
         setCurrencyStatus("error");
-        setCurrencyError(results.currency.error);
       }
     });
   }
@@ -193,6 +220,20 @@ export default function SettingsForm({
         setConfirmPassword("");
       }
     });
+  }
+
+  function addSocialLink() {
+    setSocialLinksInput((prev) => [...prev, { name: "", url: "" }]);
+  }
+
+  function removeSocialLink(index: number) {
+    setSocialLinksInput((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateSocialLink(index: number, field: "name" | "url", value: string) {
+    setSocialLinksInput((prev) =>
+      prev.map((link, i) => (i === index ? { ...link, [field]: value } : link))
+    );
   }
 
   return (
@@ -277,6 +318,16 @@ export default function SettingsForm({
             </p>
           </div>
 
+          <Button type="submit" disabled={isPendingGeneral}>
+            {isPendingGeneral ? "Saving..." : "Save General Settings"}
+          </Button>
+        </form>
+      </div>
+
+      {/* Marketplace Panel */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Marketplace</h2>
+        <form onSubmit={handleMarketplaceSubmit} className="space-y-5">
           {/* Currency */}
           <div className="space-y-2">
             <Label htmlFor="currency" className="text-foreground">
@@ -290,18 +341,112 @@ export default function SettingsForm({
               onChange={(e) => {
                 setCurrencyInput(e.target.value.toUpperCase());
                 setCurrencyStatus("idle");
-                setCurrencyError(null);
+                setMarketplaceError(null);
               }}
               className={`w-full ${getInputClass(currencyStatus)}`}
             />
-            {currencyError && <p className="text-xs text-red-400">{currencyError}</p>}
             <p className="text-xs text-muted-foreground">
               3-letter currency denomination (e.g. USD, SGD, RMB) shown next to all prices in the app.
             </p>
           </div>
 
-          <Button type="submit" disabled={isPendingGeneral}>
-            {isPendingGeneral ? "Saving..." : "Save General Settings"}
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="phone_number" className="text-foreground">
+              Phone Number
+            </Label>
+            <input
+              id="phone_number"
+              type="tel"
+              maxLength={32}
+              value={phoneInput}
+              onChange={(e) => {
+                setPhoneInput(e.target.value);
+                setMarketplaceStatus("idle");
+                setMarketplaceError(null);
+              }}
+              className={`w-full ${getInputClass("idle")}`}
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional. Displayed to buyers in the Contact Seller section.
+            </p>
+          </div>
+
+          {/* Email Address */}
+          <div className="space-y-2">
+            <Label htmlFor="email_address" className="text-foreground">
+              Email Address
+            </Label>
+            <input
+              id="email_address"
+              type="email"
+              maxLength={256}
+              value={emailInput}
+              onChange={(e) => {
+                setEmailInput(e.target.value);
+                setMarketplaceStatus("idle");
+                setMarketplaceError(null);
+              }}
+              className={`w-full ${getInputClass("idle")}`}
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional. Displayed to buyers in the Contact Seller section.
+            </p>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Social Media Links</Label>
+            <div className="space-y-2">
+              {socialLinksInput.map((link, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    value={link.name}
+                    maxLength={64}
+                    onChange={(e) => updateSocialLink(index, "name", e.target.value)}
+                    className={`flex-1 ${getInputClass("idle")}`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="URL"
+                    value={link.url}
+                    maxLength={512}
+                    onChange={(e) => updateSocialLink(index, "url", e.target.value)}
+                    className={`flex-[2] ${getInputClass("idle")}`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+                    onClick={() => removeSocialLink(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2 pl-1"
+              onClick={addSocialLink}
+            >
+              <Plus className="h-3 w-3" />
+              Add social link
+            </Button>
+          </div>
+
+          {marketplaceError && <p className="text-xs text-red-400">{marketplaceError}</p>}
+          {marketplaceStatus === "success" && (
+            <p className="text-xs text-green-400">Marketplace settings saved.</p>
+          )}
+
+          <Button type="submit" disabled={isPendingMarketplace}>
+            {isPendingMarketplace ? "Saving..." : "Save Marketplace Settings"}
           </Button>
         </form>
       </div>

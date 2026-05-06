@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, userSocialLinks } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import SettingsForm from "./settings-form";
@@ -19,10 +19,18 @@ export default async function SettingsPage() {
       top_values_count: users.top_values_count,
       theme: users.theme,
       currency: users.currency,
+      phone_number: users.phone_number,
+      email_address: users.email_address,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
+
+  const socialLinks = await db
+    .select({ name: userSocialLinks.name, url: userSocialLinks.url })
+    .from(userSocialLinks)
+    .where(eq(userSocialLinks.user_id, session.user.id))
+    .orderBy(userSocialLinks.sort_order);
 
   const collectingSinceYear = user?.collecting_since_year ?? new Date().getFullYear();
   const username = user?.username ?? "";
@@ -32,6 +40,8 @@ export default async function SettingsPage() {
   const rawTheme = user?.theme ?? "dark";
   const theme = rawTheme === "clock" ? "time" : rawTheme;
   const currency = user?.currency ?? "USD";
+  const phoneNumber = user?.phone_number ?? "";
+  const emailAddress = user?.email_address ?? "";
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -43,6 +53,9 @@ export default async function SettingsPage() {
         username={username}
         theme={theme}
         currency={currency}
+        phoneNumber={phoneNumber}
+        emailAddress={emailAddress}
+        socialLinks={socialLinks}
       />
     </div>
   );
