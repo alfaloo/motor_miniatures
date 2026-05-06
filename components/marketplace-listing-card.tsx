@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ export function MarketplaceListingCard({
 
   async function handleDelete() {
     await deleteListing(listing.id);
+    toast.success("Listing deleted");
     router.refresh();
   }
 

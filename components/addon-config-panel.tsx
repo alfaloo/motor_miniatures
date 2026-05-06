@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,7 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
         setAddCategoryName("");
         setAddCategoryOpen(false);
         setAddCategoryError(null);
+        toast.success("Category created");
         router.refresh();
       } catch {
         setAddCategoryError("Failed to create category");
@@ -99,6 +101,7 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
         setAddOptionPrice((prev) => ({ ...prev, [categoryId]: "" }));
         setAddOptionOpen((prev) => ({ ...prev, [categoryId]: false }));
         setAddOptionError((prev) => ({ ...prev, [categoryId]: null }));
+        toast.success("Option created");
         router.refresh();
       } catch {
         setAddOptionError((prev) => ({ ...prev, [categoryId]: "Failed to create option" }));

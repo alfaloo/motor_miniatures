@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Pencil, Trash2, Check, X, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +65,7 @@ export function AddonCategoryRow({
       } else {
         setIsEditing(false);
         setEditError(null);
+        toast.success("Category updated");
         router.refresh();
       }
     });
@@ -79,6 +81,7 @@ export function AddonCategoryRow({
         setAffectedListings(result.affected);
         setWarningOpen(true);
       } else {
+        toast.success("Category deleted");
         router.refresh();
       }
     });
@@ -88,6 +91,7 @@ export function AddonCategoryRow({
     startForceDeleteTransition(async () => {
       await forceDeleteCategory(category.id);
       setWarningOpen(false);
+      toast.success("Category deleted");
       router.refresh();
     });
   }

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
       } else {
         setIsEditing(false);
         setEditError(null);
+        toast.success("Option updated");
         router.refresh();
       }
     });
@@ -79,6 +81,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
         setAffectedListings(result.affected);
         setWarningOpen(true);
       } else {
+        toast.success("Option deleted");
         router.refresh();
       }
     });
@@ -88,6 +91,7 @@ export function AddonOptionRow({ option }: AddonOptionRowProps) {
     startForceDeleteTransition(async () => {
       await forceDeleteOption(option.id);
       setWarningOpen(false);
+      toast.success("Option deleted");
       router.refresh();
     });
   }

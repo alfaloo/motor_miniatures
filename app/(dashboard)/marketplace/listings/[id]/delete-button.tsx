@@ -24,7 +24,7 @@ export function DeleteListingButton({ listingId }: { listingId: string }) {
   async function handleDelete() {
     setIsPending(true);
     await deleteListing(listingId);
-    router.push("/marketplace");
+    router.push("/marketplace?toast=listing_deleted");
   }
 
   return (

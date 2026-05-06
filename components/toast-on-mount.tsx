@@ -10,6 +10,7 @@ const TOAST_MESSAGES: Record<string, { type: "success" | "error"; message: strin
   comment_deleted: { type: "success", message: "Comment deleted" },
   listing_created: { type: "success", message: "Listing created successfully" },
   listing_updated: { type: "success", message: "Listing updated successfully" },
+  listing_deleted: { type: "success", message: "Listing deleted" },
 };
 
 interface ToastOnMountProps {
