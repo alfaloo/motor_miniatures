@@ -74,6 +74,12 @@ export function MarketplaceListingCard({
   const { selectionState, toggleId } = useContext(SelectionContext);
   const isSelecting = selectionState.active;
   const isSelected = selectionState.active && selectionState.selectedIds.has(listing.id);
+  const displayStatus =
+    selectionState.active &&
+    selectionState.selectedIds.has(listing.id) &&
+    selectionState.pendingStatus !== null
+      ? selectionState.pendingStatus
+      : status;
 
   async function handleDelete() {
     await deleteListing(listing.id);
@@ -137,7 +143,7 @@ export function MarketplaceListingCard({
               Ready Stock
             </Badge>
           )}
-          <StatusBadge status={status} />
+          <StatusBadge status={displayStatus} />
         </div>
         <span className="text-xs text-muted-foreground">
           {formatPrice(listing.total_price, currency)}

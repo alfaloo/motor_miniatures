@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Settings2, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp, Settings2, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,7 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShareLinkModal } from "@/components/share-link-modal";
 import { SelectionContext } from "@/components/marketplace-selection-context";
-import type { SelectionState } from "@/components/marketplace-selection-context";
+import type { SelectionState, ListingStatus } from "@/components/marketplace-selection-context";
+import { bulkUpdateListingStatus } from "@/lib/actions/marketplace";
 
 interface MarketplacePageClientProps {
   configPanel: React.ReactNode;
@@ -27,9 +30,11 @@ export function MarketplacePageClient({
   children,
   username,
 }: MarketplacePageClientProps) {
+  const router = useRouter();
   const [configOpen, setConfigOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectionState, setSelectionState] = useState<SelectionState>({ active: false });
+  const [isCommitting, setIsCommitting] = useState(false);
 
   function toggleId(id: string) {
     if (!selectionState.active) return;
@@ -42,15 +47,51 @@ export function MarketplacePageClient({
     });
   }
 
+  function setPendingStatus(status: ListingStatus) {
+    setSelectionState((prev) => {
+      if (!prev.active) return prev;
+      return { ...prev, pendingStatus: status };
+    });
+  }
+
+  function clearPendingStatus() {
+    setSelectionState((prev) => {
+      if (!prev.active) return prev;
+      return { ...prev, pendingStatus: null };
+    });
+  }
+
   const isSelecting = selectionState.active;
   const selectedCount = isSelecting ? selectionState.selectedIds.size : 0;
+  const pendingStatus = isSelecting ? selectionState.pendingStatus : null;
 
-  function handleSelectClick() {
+  async function handleSelectClick() {
     if (!isSelecting) {
       setSelectionState({ active: true, selectedIds: new Set(), pendingStatus: null });
-      // Radix will call onOpenChange(true) automatically to open the dropdown
+      return;
     }
-    // When already active: T8 will add commit logic; Radix handles dropdown toggle
+
+    // Already active: commit or exit
+    if (pendingStatus !== null && selectedCount > 0) {
+      const ids = [...(selectionState as Extract<SelectionState, { active: true }>).selectedIds];
+      setIsCommitting(true);
+      try {
+        const result = await bulkUpdateListingStatus(ids, pendingStatus);
+        if (result.success) {
+          toast.success(`${ids.length} listing${ids.length === 1 ? "" : "s"} updated`);
+          setSelectionState({ active: false });
+          router.refresh();
+        } else {
+          toast.error(result.error ?? "Failed to update listings");
+        }
+      } catch {
+        toast.error("Failed to update listings");
+      } finally {
+        setIsCommitting(false);
+      }
+    } else {
+      setSelectionState({ active: false });
+    }
   }
 
   function handleDropdownOpenChange(open: boolean) {
@@ -71,25 +112,35 @@ export function MarketplacePageClient({
               <DropdownMenuTrigger asChild onClick={handleSelectClick}>
                 <Button
                   variant="outline"
+                  disabled={isCommitting}
                   className={
                     isSelecting
                       ? "ring-2 ring-amber-400 ring-offset-0 text-amber-600 dark:text-amber-400 gap-1.5"
                       : ""
                   }
                 >
-                  Select
-                  {isSelecting && <ChevronDown className="h-4 w-4" />}
+                  {isCommitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      Select
+                      {isSelecting && <ChevronDown className="h-4 w-4" />}
+                    </>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuLabel className="font-normal text-muted-foreground">
+                <DropdownMenuLabel
+                  className="font-normal text-muted-foreground cursor-pointer hover:text-foreground"
+                  onClick={clearPendingStatus}
+                >
                   {selectedCount} listings selected
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Mark as Active</DropdownMenuItem>
-                <DropdownMenuItem>Mark as Sold Out</DropdownMenuItem>
-                <DropdownMenuItem>Mark as Retired</DropdownMenuItem>
-                <DropdownMenuItem>Mark as Pre-order</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setPendingStatus("active")}>Mark as Active</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setPendingStatus("sold_out")}>Mark as Sold Out</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setPendingStatus("retired")}>Mark as Retired</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setPendingStatus("pre_order")}>Mark as Pre-order</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
