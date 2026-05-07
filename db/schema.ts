@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   uuid,
   varchar,
   integer,
@@ -9,6 +10,13 @@ import {
   index,
   primaryKey,
 } from "drizzle-orm/pg-core";
+
+export const listingStatusEnum = pgEnum("listing_status", [
+  "active",
+  "sold_out",
+  "retired",
+  "pre_order",
+]);
 import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
@@ -140,6 +148,7 @@ export const marketplaceListings = pgTable(
     preorder_wait_days: integer("preorder_wait_days"),
     total_price: integer("total_price").notNull(),
     display_image_url: varchar("display_image_url", { length: 512 }),
+    status: listingStatusEnum("status").notNull().default("active"),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("marketplace_listings_user_id_idx").on(table.user_id)]
@@ -154,6 +163,7 @@ export const listingAddons = pgTable(
     addon_option_id: uuid("addon_option_id")
       .notNull()
       .references(() => addonOptions.id, { onDelete: "restrict" }),
+    quantity: integer("quantity").notNull().default(1),
   },
   (table) => [
     primaryKey({ columns: [table.listing_id, table.addon_option_id] }),
@@ -176,6 +186,7 @@ export const userSocialLinks = pgTable(
 );
 
 // Type exports
+export type ListingStatus = (typeof listingStatusEnum.enumValues)[number];
 export type AddonCategory = typeof addonCategories.$inferSelect;
 export type NewAddonCategory = typeof addonCategories.$inferInsert;
 export type AddonOption = typeof addonOptions.$inferSelect;

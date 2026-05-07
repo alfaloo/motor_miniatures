@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { users, marketplaceListings, listingAddons } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, count, and, inArray } from "drizzle-orm";
 import { MarketplaceListingCard } from "@/components/marketplace-listing-card";
 import { MarketplaceListingSkeletonGrid } from "@/components/marketplace-listing-skeleton";
 import { Tag } from "lucide-react";
@@ -28,11 +28,17 @@ async function StorefrontGrid({
       total_price: marketplaceListings.total_price,
       created_at: marketplaceListings.created_at,
       display_image_url: marketplaceListings.display_image_url,
+      status: marketplaceListings.status,
       addon_count: count(listingAddons.addon_option_id),
     })
     .from(marketplaceListings)
     .leftJoin(listingAddons, eq(listingAddons.listing_id, marketplaceListings.id))
-    .where(eq(marketplaceListings.user_id, userId))
+    .where(
+      and(
+        eq(marketplaceListings.user_id, userId),
+        inArray(marketplaceListings.status, ["active", "pre_order"])
+      )
+    )
     .groupBy(marketplaceListings.id)
     .orderBy(desc(marketplaceListings.created_at));
 
@@ -53,6 +59,7 @@ async function StorefrontGrid({
           listing={listing}
           currency={currency}
           vendorMode={false}
+          status={listing.status}
           detailHref={`/store/${username}/${listing.id}`}
           displayImageUrl={listing.display_image_url}
         />

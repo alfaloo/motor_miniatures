@@ -176,8 +176,10 @@ export default async function ListingDetailPage({
                 </p>
                 {group.options.map((option) => (
                   <div key={option.id} className="flex justify-between text-sm pl-2">
-                    <span className="text-foreground">{option.name}</span>
-                    <span className="text-foreground">{formatPrice(option.price, currency)}</span>
+                    <span className="text-foreground">
+                      {option.name}{option.quantity > 1 ? ` ×${option.quantity}` : ""}
+                    </span>
+                    <span className="text-foreground">{formatPrice(option.price * option.quantity, currency)}</span>
                   </div>
                 ))}
               </div>
