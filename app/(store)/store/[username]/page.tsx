@@ -59,6 +59,7 @@ async function StorefrontGrid({
           listing={listing}
           currency={currency}
           vendorMode={false}
+          status={listing.status}
           detailHref={`/store/${username}/${listing.id}`}
           displayImageUrl={listing.display_image_url}
         />

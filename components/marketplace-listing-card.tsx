@@ -1,5 +1,6 @@
 "use client";
 
+import { useContext } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -20,23 +21,59 @@ import { Pencil, Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import { deleteListing } from "@/lib/actions/marketplace";
 import type { ListingWithAddonCount } from "@/lib/actions/marketplace";
+import { SelectionContext } from "@/components/marketplace-selection-context";
+import type { ListingStatus } from "@/components/marketplace-selection-context";
 
 interface MarketplaceListingCardProps {
   listing: ListingWithAddonCount;
   currency: string;
   vendorMode: boolean;
+  status: ListingStatus;
   detailHref?: string;
   displayImageUrl?: string | null;
+}
+
+function StatusBadge({ status }: { status: ListingStatus }) {
+  if (status === "active") {
+    return (
+      <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs">
+        Active
+      </Badge>
+    );
+  }
+  if (status === "pre_order") {
+    return (
+      <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
+        Pre-order
+      </Badge>
+    );
+  }
+  if (status === "sold_out") {
+    return (
+      <Badge className="bg-orange-600 hover:bg-orange-600 text-white text-xs">
+        Sold Out
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="secondary" className="text-xs">
+      Retired
+    </Badge>
+  );
 }
 
 export function MarketplaceListingCard({
   listing,
   currency,
   vendorMode,
+  status,
   detailHref,
   displayImageUrl,
 }: MarketplaceListingCardProps) {
   const router = useRouter();
+  const { selectionState, toggleId } = useContext(SelectionContext);
+  const isSelecting = selectionState.active;
+  const isSelected = selectionState.active && selectionState.selectedIds.has(listing.id);
 
   async function handleDelete() {
     await deleteListing(listing.id);
@@ -44,11 +81,24 @@ export function MarketplaceListingCard({
     router.refresh();
   }
 
+  function handleClick() {
+    if (isSelecting) {
+      toggleId(listing.id);
+    } else if (detailHref) {
+      router.push(detailHref);
+    }
+  }
+
+  const wrapperClass = [
+    "rounded-xl border border-border bg-card p-4 flex flex-col gap-3",
+    isSelected ? "ring-2 ring-amber-400 ring-offset-2 bg-amber-50 dark:bg-amber-950" : "",
+    isSelecting ? "cursor-pointer" : detailHref ? "hover:border-blue-500 transition cursor-pointer" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div
-      className={`rounded-xl border border-border bg-card p-4 flex flex-col gap-3${detailHref ? " hover:border-blue-500 transition cursor-pointer" : ""}`}
-      onClick={detailHref ? () => router.push(detailHref) : undefined}
-    >
+    <div className={wrapperClass} onClick={handleClick}>
       {/* Top row: brand + scale */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium text-foreground">{listing.brand}</span>
@@ -75,9 +125,9 @@ export function MarketplaceListingCard({
 
       <Separator className="bg-border" />
 
-      {/* Bottom metadata: preorder badge + price */}
+      {/* Bottom metadata: badges + price */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {listing.is_made_to_order ? (
             <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
               Made to Order
@@ -87,6 +137,7 @@ export function MarketplaceListingCard({
               Ready Stock
             </Badge>
           )}
+          <StatusBadge status={status} />
         </div>
         <span className="text-xs text-muted-foreground">
           {formatPrice(listing.total_price, currency)}
