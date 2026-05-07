@@ -34,6 +34,7 @@ export const listingSchema = z.object({
   ),
   addon_option_ids: z.array(z.string().uuid()).default([]),
   display_image_url: z.string().url().optional(),
+  status: z.enum(["active", "sold_out", "retired", "pre_order"]).default("active"),
 }).superRefine((data, ctx) => {
   if (data.is_made_to_order && (data.preorder_wait_days == null || isNaN(data.preorder_wait_days))) {
     ctx.addIssue({
