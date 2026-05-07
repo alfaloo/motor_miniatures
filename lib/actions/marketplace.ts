@@ -8,7 +8,9 @@ import {
   listingAddons,
   addonOptions,
   addonCategories,
+  users,
 } from "@/db/schema";
+import type { ListingStatus } from "@/db/schema";
 import { eq, and, inArray, sql, desc, asc, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { listingSchema } from "@/lib/validations/listing";
@@ -89,6 +91,7 @@ export async function createListing(formData: FormData) {
       is_made_to_order: data.is_made_to_order,
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
+      status: "active",
     })
     .returning({ id: marketplaceListings.id });
 
@@ -280,31 +283,44 @@ export async function updateListingImageUrl(listingId: string, url: string) {
   return { success: true };
 }
 
-export async function getListings(userId: string) {
-  const listings = await db
-    .select({
-      id: marketplaceListings.id,
-      brand: marketplaceListings.brand,
-      make: marketplaceListings.make,
-      model: marketplaceListings.model,
-      variant: marketplaceListings.variant,
-      scale: marketplaceListings.scale,
-      is_made_to_order: marketplaceListings.is_made_to_order,
-      total_price: marketplaceListings.total_price,
-      display_image_url: marketplaceListings.display_image_url,
-      created_at: marketplaceListings.created_at,
-      addon_count: count(listingAddons.addon_option_id),
-    })
-    .from(marketplaceListings)
-    .leftJoin(listingAddons, eq(listingAddons.listing_id, marketplaceListings.id))
-    .where(eq(marketplaceListings.user_id, userId))
-    .groupBy(marketplaceListings.id)
-    .orderBy(desc(marketplaceListings.created_at));
+const PAGE_SIZE = 12;
 
-  return listings;
+export async function getListings(userId: string, page: number = 1) {
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const [listings, totalResult] = await Promise.all([
+    db
+      .select({
+        id: marketplaceListings.id,
+        brand: marketplaceListings.brand,
+        make: marketplaceListings.make,
+        model: marketplaceListings.model,
+        variant: marketplaceListings.variant,
+        scale: marketplaceListings.scale,
+        is_made_to_order: marketplaceListings.is_made_to_order,
+        total_price: marketplaceListings.total_price,
+        display_image_url: marketplaceListings.display_image_url,
+        status: marketplaceListings.status,
+        created_at: marketplaceListings.created_at,
+        addon_count: count(listingAddons.addon_option_id),
+      })
+      .from(marketplaceListings)
+      .leftJoin(listingAddons, eq(listingAddons.listing_id, marketplaceListings.id))
+      .where(eq(marketplaceListings.user_id, userId))
+      .groupBy(marketplaceListings.id)
+      .orderBy(desc(marketplaceListings.created_at))
+      .limit(PAGE_SIZE)
+      .offset(offset),
+    db
+      .select({ total: count() })
+      .from(marketplaceListings)
+      .where(eq(marketplaceListings.user_id, userId)),
+  ]);
+
+  return { listings, total: totalResult[0]?.total ?? 0 };
 }
 
-export type ListingWithAddonCount = Awaited<ReturnType<typeof getListings>>[number];
+export type ListingWithAddonCount = Awaited<ReturnType<typeof getListings>>["listings"][number];
 
 type AddonOptionWithCategory = {
   id: string;
@@ -338,6 +354,43 @@ export type ListingDetail = {
   created_at: Date;
   addon_groups: ListingDetailAddonGroup[];
 };
+
+export async function bulkUpdateListingStatus(
+  listingIds: string[],
+  status: ListingStatus
+): Promise<{ success: boolean; error?: string }> {
+  if (listingIds.length === 0) return { success: true };
+
+  const session = await getSession();
+  const userId = session.user.id;
+
+  try {
+    await db
+      .update(marketplaceListings)
+      .set({ status })
+      .where(
+        and(
+          inArray(marketplaceListings.id, listingIds),
+          eq(marketplaceListings.user_id, userId)
+        )
+      );
+
+    const [userRow] = await db
+      .select({ username: users.username })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    revalidatePath("/dashboard/marketplace");
+    if (userRow) {
+      revalidatePath(`/store/${userRow.username}`);
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update listing status" };
+  }
+}
 
 export async function getListingDetail(id: string): Promise<ListingDetail | null> {
   const [listing] = await db

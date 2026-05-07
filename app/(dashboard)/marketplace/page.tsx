@@ -22,7 +22,7 @@ async function ListingsGrid({
   userId: string;
   currency: string;
 }) {
-  const listings = await getListings(userId);
+  const { listings } = await getListings(userId);
 
   if (listings.length === 0) {
     return (

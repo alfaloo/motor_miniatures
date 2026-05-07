@@ -28,6 +28,7 @@ async function StorefrontGrid({
       total_price: marketplaceListings.total_price,
       created_at: marketplaceListings.created_at,
       display_image_url: marketplaceListings.display_image_url,
+      status: marketplaceListings.status,
       addon_count: count(listingAddons.addon_option_id),
     })
     .from(marketplaceListings)
