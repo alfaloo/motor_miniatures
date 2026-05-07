@@ -11,20 +11,25 @@ import { MarketplaceListingSkeletonGrid } from "@/components/marketplace-listing
 import { AddonConfigPanel } from "@/components/addon-config-panel";
 import { MarketplacePageClient } from "@/components/marketplace-page-client";
 import { ToastOnMount } from "@/components/toast-on-mount";
-import { ShareLinkModal } from "@/components/share-link-modal";
+import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Tag, Plus } from "lucide-react";
 
 async function ListingsGrid({
   userId,
   currency,
+  page,
+  searchParams,
 }: {
   userId: string;
   currency: string;
+  page: number;
+  searchParams: Record<string, string>;
 }) {
-  const { listings } = await getListings(userId);
+  const { listings, total } = await getListings(userId, page);
+  const totalPages = Math.ceil(total / 12);
 
-  if (listings.length === 0) {
+  if (listings.length === 0 && page === 1) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <Tag className="h-16 w-16 text-muted-foreground" />
@@ -45,19 +50,26 @@ async function ListingsGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {listings.map((listing) => (
-        <MarketplaceListingCard
-          key={listing.id}
-          listing={listing}
-          currency={currency}
-          vendorMode={true}
-          status={listing.status}
-          detailHref={`/marketplace/listings/${listing.id}`}
-          displayImageUrl={listing.display_image_url}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {listings.map((listing) => (
+          <MarketplaceListingCard
+            key={listing.id}
+            listing={listing}
+            currency={currency}
+            vendorMode={true}
+            status={listing.status}
+            detailHref={`/marketplace/listings/${listing.id}`}
+            displayImageUrl={listing.display_image_url}
+          />
+        ))}
+      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        searchParams={searchParams}
+      />
+    </>
   );
 }
 
@@ -94,6 +106,7 @@ export default async function MarketplacePage({
   }
 
   const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
 
   const [userRow] = await db
     .select({ currency: users.currency, username: users.username })
@@ -106,21 +119,8 @@ export default async function MarketplacePage({
     <div className="space-y-6">
       <ToastOnMount toastKey={params.toast} />
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-foreground">Marketplace</h1>
-        <div className="flex items-center gap-2">
-          <ShareLinkModal username={username} />
-          <Link href="/marketplace/listings/new">
-            <Button className="gap-1.5">
-              <Plus className="h-4 w-4" />
-              New listing
-            </Button>
-          </Link>
-        </div>
-      </div>
-
       <MarketplacePageClient
+        username={username}
         configPanel={
           <Suspense fallback={<div className="py-4 text-sm text-muted-foreground">Loading...</div>}>
             <AddonConfigPanelWrapper userId={session.user.id} />
@@ -128,7 +128,12 @@ export default async function MarketplacePage({
         }
       >
         <Suspense fallback={<MarketplaceListingSkeletonGrid count={8} />}>
-          <ListingsGrid userId={session.user.id} currency={currency} />
+          <ListingsGrid
+            userId={session.user.id}
+            currency={currency}
+            page={page}
+            searchParams={params}
+          />
         </Suspense>
       </MarketplacePageClient>
     </div>
