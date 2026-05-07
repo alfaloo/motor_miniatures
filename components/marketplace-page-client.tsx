@@ -6,18 +6,17 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Settings2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ShareLinkModal } from "@/components/share-link-modal";
 import { SelectionContext } from "@/components/marketplace-selection-context";
 import type { SelectionState, ListingStatus } from "@/components/marketplace-selection-context";
 import { bulkUpdateListingStatus } from "@/lib/actions/marketplace";
+
+const STATUS_LABELS: Record<ListingStatus, string> = {
+  active: "Mark as Active",
+  sold_out: "Mark as Sold Out",
+  retired: "Mark as Retired",
+  pre_order: "Mark as Pre-order",
+};
 
 interface MarketplacePageClientProps {
   configPanel: React.ReactNode;
@@ -32,7 +31,6 @@ export function MarketplacePageClient({
 }: MarketplacePageClientProps) {
   const router = useRouter();
   const [configOpen, setConfigOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectionState, setSelectionState] = useState<SelectionState>({ active: false });
   const [isCommitting, setIsCommitting] = useState(false);
 
@@ -94,11 +92,6 @@ export function MarketplacePageClient({
     }
   }
 
-  function handleDropdownOpenChange(open: boolean) {
-    setDropdownOpen(open);
-    // Closing the dropdown does NOT exit selection mode — cards remain selectable
-  }
-
   return (
     <SelectionContext.Provider value={{ selectionState, toggleId }}>
       <div className="space-y-6">
@@ -108,41 +101,54 @@ export function MarketplacePageClient({
           <div className="flex items-center gap-2">
             <ShareLinkModal username={username} />
 
-            <DropdownMenu open={dropdownOpen} onOpenChange={handleDropdownOpenChange}>
-              <DropdownMenuTrigger asChild onClick={handleSelectClick}>
-                <Button
-                  variant="outline"
-                  disabled={isCommitting}
-                  className={
-                    isSelecting
-                      ? "ring-2 ring-amber-400 ring-offset-0 text-amber-600 dark:text-amber-400 gap-1.5"
-                      : ""
-                  }
-                >
-                  {isCommitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      Select
-                      {isSelecting && <ChevronDown className="h-4 w-4" />}
-                    </>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuLabel
-                  className="font-normal text-muted-foreground cursor-pointer hover:text-foreground"
-                  onClick={clearPendingStatus}
-                >
-                  {selectedCount} listings selected
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setPendingStatus("active")}>Mark as Active</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setPendingStatus("sold_out")}>Mark as Sold Out</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setPendingStatus("retired")}>Mark as Retired</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setPendingStatus("pre_order")}>Mark as Pre-order</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Select button + custom panel (no Radix overlay — card clicks pass through) */}
+            <div className="relative">
+              <Button
+                variant="outline"
+                disabled={isCommitting}
+                onClick={handleSelectClick}
+                className={
+                  isSelecting
+                    ? "ring-2 ring-amber-400 ring-offset-0 text-amber-600 dark:text-amber-400 gap-1.5"
+                    : "gap-1.5"
+                }
+              >
+                {isCommitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Select
+                    {isSelecting && <ChevronDown className="h-4 w-4" />}
+                  </>
+                )}
+              </Button>
+
+              {isSelecting && (
+                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-md border border-border bg-popover shadow-md py-1">
+                  <button
+                    type="button"
+                    onClick={clearPendingStatus}
+                    className="w-full text-left px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {selectedCount} listing{selectedCount === 1 ? "" : "s"} selected
+                  </button>
+                  <div className="h-px bg-border my-1" />
+                  {(Object.entries(STATUS_LABELS) as [ListingStatus, string][]).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setPendingStatus(value)}
+                      className={[
+                        "w-full text-left px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
+                        pendingStatus === value ? "text-amber-600 dark:text-amber-400 font-medium" : "text-foreground",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Link href="/marketplace/listings/new">
               <Button className="gap-1.5">
