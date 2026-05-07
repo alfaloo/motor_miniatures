@@ -381,7 +381,7 @@ export async function bulkUpdateListingStatus(
       .where(eq(users.id, userId))
       .limit(1);
 
-    revalidatePath("/dashboard/marketplace");
+    revalidatePath("/marketplace");
     if (userRow) {
       revalidatePath(`/store/${userRow.username}`);
     }
