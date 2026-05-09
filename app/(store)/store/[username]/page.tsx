@@ -136,12 +136,12 @@ export default async function StorefrontPage({
 
   const page = Math.max(1, parseInt(queryParams.page ?? "1", 10) || 1);
 
-  // No status filter on storefront — status is controlled by vendor visibility settings
   const filters: ListingFilterValues = {
     brand: queryParams.brand || undefined,
     make: queryParams.make || undefined,
     scale: queryParams.scale || undefined,
     availability: (queryParams.availability as ListingFilterValues["availability"]) || undefined,
+    status: (queryParams.status as ListingFilterValues["status"]) || undefined,
   };
 
   // Build filter conditions alongside the existing visibleStatuses condition
@@ -163,6 +163,9 @@ export default async function StorefrontPage({
     conditions.push(eq(marketplaceListings.is_made_to_order, false));
   } else if (filters.availability === "made_to_order") {
     conditions.push(eq(marketplaceListings.is_made_to_order, true));
+  }
+  if (filters.status && filters.status !== ("any" as ListingFilterValues["status"])) {
+    conditions.push(eq(marketplaceListings.status, filters.status));
   }
 
   const whereClause = and(...conditions);

@@ -33,7 +33,7 @@ export function ShareLinkModal({ username }: ShareLinkModalProps) {
       <DialogPrimitive.Trigger asChild>
         <Button
           variant="outline"
-          className="border-border bg-secondary hover:bg-black/15 text-foreground gap-1.5"
+          className="h-9 bg-card border-border text-foreground hover:bg-secondary gap-1.5"
         >
           <Share2 className="h-4 w-4" />
           Share storefront

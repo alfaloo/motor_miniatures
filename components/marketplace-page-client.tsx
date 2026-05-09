@@ -46,7 +46,7 @@ interface MarketplacePageClientProps {
   children: React.ReactNode;
   username: string;
   activeFilters: MarketplaceFilterValues;
-  filterOptions: { brands: string[]; makes: string[]; scales: string[] };
+  filterOptions: { brands: string[]; makes: string[]; scales: string[]; availabilities: string[]; statuses: string[] };
   listingCount: number;
 }
 
@@ -156,8 +156,8 @@ export function MarketplacePageClient({
                 onClick={handleSelectClick}
                 className={
                   isSelecting
-                    ? "ring-2 ring-amber-400 ring-offset-0 text-amber-600 dark:text-amber-400 gap-1.5"
-                    : "gap-1.5"
+                    ? "h-9 bg-card border-border hover:bg-secondary gap-1.5 ring-2 ring-amber-400 ring-offset-0 text-amber-600 dark:text-amber-400"
+                    : "h-9 bg-card border-border text-foreground hover:bg-secondary gap-1.5"
                 }
               >
                 {isCommitting ? (
@@ -213,7 +213,7 @@ export function MarketplacePageClient({
             </Button>
 
             <Link href="/marketplace/listings/new">
-              <Button className="gap-1.5">
+              <Button className="h-9 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="h-4 w-4" />
                 New listing
               </Button>

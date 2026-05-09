@@ -357,14 +357,14 @@ export type ListingWithAddonCount = Awaited<ReturnType<typeof getListings>>["lis
 export async function getListingFilterOptions(
   userId: string,
   visibleStatuses?: ListingStatus[]
-): Promise<{ brands: string[]; makes: string[]; scales: string[] }> {
+): Promise<{ brands: string[]; makes: string[]; scales: string[]; availabilities: string[]; statuses: string[] }> {
   const baseCondition = eq(marketplaceListings.user_id, userId);
   const condition =
     visibleStatuses && visibleStatuses.length > 0
       ? and(baseCondition, inArray(marketplaceListings.status, visibleStatuses))
       : baseCondition;
 
-  const [brandsResult, makesResult, scalesResult] = await Promise.all([
+  const [brandsResult, makesResult, scalesResult, availabilityResult, statusResult] = await Promise.all([
     db
       .selectDistinct({ value: marketplaceListings.brand })
       .from(marketplaceListings)
@@ -377,6 +377,14 @@ export async function getListingFilterOptions(
       .selectDistinct({ value: marketplaceListings.scale })
       .from(marketplaceListings)
       .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.is_made_to_order })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.status })
+      .from(marketplaceListings)
+      .where(condition),
   ]);
 
   const toSortedStrings = (rows: { value: string | null }[]) =>
@@ -385,10 +393,16 @@ export async function getListingFilterOptions(
       .filter((v): v is string => v !== null)
       .sort();
 
+  const availabilities: string[] = availabilityResult
+    .flatMap(({ value }) => (value === false ? ["ready_stock"] : value === true ? ["made_to_order"] : []))
+    .sort();
+
   return {
     brands: toSortedStrings(brandsResult),
     makes: toSortedStrings(makesResult),
     scales: toSortedStrings(scalesResult),
+    availabilities,
+    statuses: toSortedStrings(statusResult as { value: string | null }[]),
   };
 }
 

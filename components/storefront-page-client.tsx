@@ -11,6 +11,7 @@ const FILTER_KEY_LABELS: { key: keyof MarketplaceFilterValues; label: string }[]
   { key: "make", label: "Make" },
   { key: "scale", label: "Scale" },
   { key: "availability", label: "Availability" },
+  { key: "status", label: "Status" },
 ];
 
 function isActive(v: string | undefined): boolean {
@@ -29,7 +30,7 @@ function buildFilterUrl(username: string, filters: MarketplaceFilterValues): str
 interface StorefrontPageClientProps {
   username: string;
   activeFilters: MarketplaceFilterValues;
-  filterOptions: { brands: string[]; makes: string[]; scales: string[] };
+  filterOptions: { brands: string[]; makes: string[]; scales: string[]; availabilities: string[]; statuses: string[] };
   listingCount: number;
   children: React.ReactNode;
 }
@@ -103,7 +104,7 @@ export function StorefrontPageClient({
         options={filterOptions}
         onApply={handleApply}
         onClear={handleClear}
-        showStatus={false}
+        showStatus={true}
       />
 
       {/* Listings grid OR zero-results empty state */}

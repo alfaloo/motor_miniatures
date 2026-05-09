@@ -23,13 +23,26 @@ export interface MarketplaceFilterValues {
 interface MarketplaceFilterPanelProps {
   isOpen: boolean;
   activeFilters: MarketplaceFilterValues;
-  options: { brands: string[]; makes: string[]; scales: string[] };
+  options: { brands: string[]; makes: string[]; scales: string[]; availabilities: string[]; statuses: string[] };
   onApply: (filters: MarketplaceFilterValues) => void;
   onClear: () => void;
   showStatus?: boolean;
 }
 
 const ACTIVE_FILTER_CLASS = "ring-2 ring-amber-400 ring-offset-0";
+
+const AVAILABILITY_LABELS: Record<string, string> = {
+  ready_stock: "Ready Stock",
+  made_to_order: "Made to Order",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  sold_out: "Sold Out",
+  pre_order: "Pre-Order",
+  retired: "Retired",
+  unpublished: "Unpublished",
+};
 
 function isActive(v: string | undefined): boolean {
   return Boolean(v && v !== "any" && v !== "");
@@ -162,8 +175,11 @@ export function MarketplaceFilterPanel({
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground">
               <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="ready_stock">Ready Stock</SelectItem>
-              <SelectItem value="made_to_order">Made to Order</SelectItem>
+              {options.availabilities.map((a) => (
+                <SelectItem key={a} value={a}>
+                  {AVAILABILITY_LABELS[a] ?? a}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -185,11 +201,11 @@ export function MarketplaceFilterPanel({
               </SelectTrigger>
               <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="sold_out">Sold Out</SelectItem>
-                <SelectItem value="pre_order">Pre-Order</SelectItem>
-                <SelectItem value="retired">Retired</SelectItem>
-                <SelectItem value="unpublished">Unpublished</SelectItem>
+                {options.statuses.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STATUS_LABELS[s] ?? s}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
