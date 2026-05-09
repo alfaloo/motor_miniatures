@@ -285,8 +285,40 @@ export async function updateListingImageUrl(listingId: string, url: string) {
 
 const PAGE_SIZE = 12;
 
-export async function getListings(userId: string, page: number = 1) {
+export interface ListingFilterValues {
+  brand?: string;
+  make?: string;
+  scale?: string;
+  availability?: "made_to_order" | "ready_stock";
+  status?: ListingStatus;
+}
+
+export async function getListings(userId: string, page: number = 1, filters?: ListingFilterValues) {
   const offset = (page - 1) * PAGE_SIZE;
+
+  const conditions = [eq(marketplaceListings.user_id, userId)];
+
+  if (filters) {
+    if (filters.brand && filters.brand !== "any") {
+      conditions.push(eq(marketplaceListings.brand, filters.brand));
+    }
+    if (filters.make && filters.make !== "any") {
+      conditions.push(eq(marketplaceListings.make, filters.make));
+    }
+    if (filters.scale && filters.scale !== "any") {
+      conditions.push(eq(marketplaceListings.scale, filters.scale));
+    }
+    if (filters.availability === "ready_stock") {
+      conditions.push(eq(marketplaceListings.is_made_to_order, false));
+    } else if (filters.availability === "made_to_order") {
+      conditions.push(eq(marketplaceListings.is_made_to_order, true));
+    }
+    if (filters.status && filters.status !== ("any" as ListingStatus)) {
+      conditions.push(eq(marketplaceListings.status, filters.status));
+    }
+  }
+
+  const whereClause = and(...conditions);
 
   const [listings, totalResult] = await Promise.all([
     db
@@ -306,7 +338,7 @@ export async function getListings(userId: string, page: number = 1) {
       })
       .from(marketplaceListings)
       .leftJoin(listingAddons, eq(listingAddons.listing_id, marketplaceListings.id))
-      .where(eq(marketplaceListings.user_id, userId))
+      .where(whereClause)
       .groupBy(marketplaceListings.id)
       .orderBy(desc(marketplaceListings.created_at))
       .limit(PAGE_SIZE)
@@ -314,13 +346,65 @@ export async function getListings(userId: string, page: number = 1) {
     db
       .select({ total: count() })
       .from(marketplaceListings)
-      .where(eq(marketplaceListings.user_id, userId)),
+      .where(whereClause),
   ]);
 
   return { listings, total: totalResult[0]?.total ?? 0 };
 }
 
 export type ListingWithAddonCount = Awaited<ReturnType<typeof getListings>>["listings"][number];
+
+export async function getListingFilterOptions(
+  userId: string,
+  visibleStatuses?: ListingStatus[]
+): Promise<{ brands: string[]; makes: string[]; scales: string[]; availabilities: string[]; statuses: string[] }> {
+  const baseCondition = eq(marketplaceListings.user_id, userId);
+  const condition =
+    visibleStatuses && visibleStatuses.length > 0
+      ? and(baseCondition, inArray(marketplaceListings.status, visibleStatuses))
+      : baseCondition;
+
+  const [brandsResult, makesResult, scalesResult, availabilityResult, statusResult] = await Promise.all([
+    db
+      .selectDistinct({ value: marketplaceListings.brand })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.make })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.scale })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.is_made_to_order })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.status })
+      .from(marketplaceListings)
+      .where(condition),
+  ]);
+
+  const toSortedStrings = (rows: { value: string | null }[]) =>
+    rows
+      .map((r) => r.value)
+      .filter((v): v is string => v !== null)
+      .sort();
+
+  const availabilities: string[] = availabilityResult
+    .flatMap(({ value }) => (value === false ? ["ready_stock"] : value === true ? ["made_to_order"] : []))
+    .sort();
+
+  return {
+    brands: toSortedStrings(brandsResult),
+    makes: toSortedStrings(makesResult),
+    scales: toSortedStrings(scalesResult),
+    availabilities,
+    statuses: toSortedStrings(statusResult as { value: string | null }[]),
+  };
+}
 
 type AddonOptionWithCategory = {
   id: string;

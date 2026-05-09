@@ -43,13 +43,16 @@ async function recomputeTotalPrice(tx: DbTx, listingId: string) {
 export async function createCategory(name: string) {
   const session = await getSession();
 
-  await db.insert(addonCategories).values({
-    user_id: session.user.id,
-    name: name.trim(),
-  });
+  const [newCategory] = await db
+    .insert(addonCategories)
+    .values({
+      user_id: session.user.id,
+      name: name.trim(),
+    })
+    .returning({ id: addonCategories.id, name: addonCategories.name });
 
   revalidatePath("/marketplace");
-  return { success: true };
+  return { success: true, category: newCategory };
 }
 
 export async function updateCategory(id: string, name: string) {
@@ -153,6 +156,18 @@ export async function createOption(
 ) {
   const session = await getSession();
 
+  const [maxRow] = await db
+    .select({ max: sql<number>`COALESCE(MAX(${addonOptions.sort_order}), -1)` })
+    .from(addonOptions)
+    .where(
+      and(
+        eq(addonOptions.category_id, categoryId),
+        eq(addonOptions.user_id, session.user.id)
+      )
+    );
+
+  const nextOrder = Number(maxRow?.max ?? -1) + 1;
+
   const [newOption] = await db
     .insert(addonOptions)
     .values({
@@ -160,6 +175,7 @@ export async function createOption(
       user_id: session.user.id,
       name: name.trim(),
       price: priceInCents,
+      sort_order: nextOrder,
     })
     .returning();
 

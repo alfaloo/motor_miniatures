@@ -43,21 +43,28 @@ function StatusBadge({ status }: { status: ListingStatus }) {
   }
   if (status === "pre_order") {
     return (
-      <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-xs">
+      <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-xs">
         Pre-order
       </Badge>
     );
   }
   if (status === "sold_out") {
     return (
-      <Badge className="bg-orange-600 hover:bg-orange-600 text-white text-xs">
+      <Badge variant="secondary" className="text-xs text-muted-foreground">
         Sold Out
       </Badge>
     );
   }
+  if (status === "retired") {
+    return (
+      <Badge variant="secondary" className="text-xs text-muted-foreground">
+        Retired
+      </Badge>
+    );
+  }
   return (
-    <Badge variant="secondary" className="text-xs">
-      Retired
+    <Badge variant="secondary" className="text-xs text-muted-foreground">
+      Unpublished
     </Badge>
   );
 }

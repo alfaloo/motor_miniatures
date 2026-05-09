@@ -116,10 +116,13 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
     }
     startCategoryTransition(async () => {
       try {
-        await createCategory(addCategoryName.trim());
+        const result = await createCategory(addCategoryName.trim());
         setAddCategoryName("");
         setAddCategoryOpen(false);
         setAddCategoryError(null);
+        setLocalCategories((prev) => [...prev, result.category]);
+        setLocalOptions((prev) => ({ ...prev, [result.category.id]: [] }));
+        setOpenCategories((prev) => new Set([...prev, result.category.id]));
         toast.success("Category created");
         router.refresh();
       } catch {
@@ -151,11 +154,15 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
 
     startOptionTransition(async () => {
       try {
-        await createOption(categoryId, name, price);
+        const result = await createOption(categoryId, name, price);
         setAddOptionName((prev) => ({ ...prev, [categoryId]: "" }));
         setAddOptionPrice((prev) => ({ ...prev, [categoryId]: "" }));
         setAddOptionOpen((prev) => ({ ...prev, [categoryId]: false }));
         setAddOptionError((prev) => ({ ...prev, [categoryId]: null }));
+        setLocalOptions((prev) => ({
+          ...prev,
+          [categoryId]: [...(prev[categoryId] ?? []), result.option],
+        }));
         toast.success("Option created");
         router.refresh();
       } catch {
@@ -194,6 +201,14 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
                   category={category}
                   isOpen={isOpen}
                   onToggle={() => toggleCategory(category.id)}
+                  onDelete={() => {
+                    setLocalCategories((prev) => prev.filter((c) => c.id !== category.id));
+                    setLocalOptions((prev) => {
+                      const next = { ...prev };
+                      delete next[category.id];
+                      return next;
+                    });
+                  }}
                 >
                   {/* Options DnD list */}
                   <DndContext
@@ -218,6 +233,12 @@ export function AddonConfigPanel({ categories, options }: AddonConfigPanelProps)
                               [category.id]: prev[category.id].map((o) =>
                                 o.id === opt.id ? { ...o, name, price } : o
                               ),
+                            }))
+                          }
+                          onDelete={() =>
+                            setLocalOptions((prev) => ({
+                              ...prev,
+                              [category.id]: prev[category.id].filter((o) => o.id !== opt.id),
                             }))
                           }
                         />

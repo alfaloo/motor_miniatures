@@ -5,28 +5,34 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { users, addonCategories, addonOptions } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { getListings } from "@/lib/actions/marketplace";
+import {
+  getListings,
+  getListingFilterOptions,
+  type ListingFilterValues,
+  type ListingWithAddonCount,
+} from "@/lib/actions/marketplace";
 import { MarketplaceListingCard } from "@/components/marketplace-listing-card";
-import { MarketplaceListingSkeletonGrid } from "@/components/marketplace-listing-skeleton";
 import { AddonConfigPanel } from "@/components/addon-config-panel";
+import { StorefrontVisibilityPanel } from "@/components/storefront-visibility-panel";
 import { MarketplacePageClient } from "@/components/marketplace-page-client";
 import { ToastOnMount } from "@/components/toast-on-mount";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Tag, Plus } from "lucide-react";
 
-async function ListingsGrid({
-  userId,
+function ListingsGrid({
+  listings,
+  total,
   currency,
   page,
   searchParams,
 }: {
-  userId: string;
+  listings: ListingWithAddonCount[];
+  total: number;
   currency: string;
   page: number;
   searchParams: Record<string, string>;
 }) {
-  const { listings, total } = await getListings(userId, page);
   const totalPages = Math.ceil(total / 12);
 
   if (listings.length === 0 && page === 1) {
@@ -73,8 +79,19 @@ async function ListingsGrid({
   );
 }
 
-async function AddonConfigPanelWrapper({ userId }: { userId: string }) {
-  const [categories, options] = await Promise.all([
+async function ConfigPanelWrapper({ userId }: { userId: string }) {
+  const [userRow, categories, options] = await Promise.all([
+    db
+      .select({
+        storefront_show_active: users.storefront_show_active,
+        storefront_show_pre_order: users.storefront_show_pre_order,
+        storefront_show_sold_out: users.storefront_show_sold_out,
+        storefront_show_retired: users.storefront_show_retired,
+        storefront_show_unpublished: users.storefront_show_unpublished,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
     db
       .select({ id: addonCategories.id, name: addonCategories.name })
       .from(addonCategories)
@@ -92,7 +109,24 @@ async function AddonConfigPanelWrapper({ userId }: { userId: string }) {
       .orderBy(asc(addonOptions.sort_order), asc(addonOptions.created_at)),
   ]);
 
-  return <AddonConfigPanel categories={categories} options={options} />;
+  const visibilitySettings = userRow[0] ?? {
+    storefront_show_active: true,
+    storefront_show_pre_order: true,
+    storefront_show_sold_out: false,
+    storefront_show_retired: false,
+    storefront_show_unpublished: false,
+  };
+
+  return (
+    <div className="space-y-6">
+      <StorefrontVisibilityPanel settings={visibilitySettings} />
+      <div className="h-px bg-border" />
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">Add-on options</p>
+        <AddonConfigPanel categories={categories} options={options} />
+      </div>
+    </div>
+  );
 }
 
 export default async function MarketplacePage({
@@ -108,10 +142,23 @@ export default async function MarketplacePage({
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
 
-  const [userRow] = await db
-    .select({ currency: users.currency, username: users.username })
-    .from(users)
-    .where(eq(users.id, session.user.id));
+  const filters: ListingFilterValues = {
+    brand: params.brand || undefined,
+    make: params.make || undefined,
+    scale: params.scale || undefined,
+    availability: (params.availability as ListingFilterValues["availability"]) || undefined,
+    status: (params.status as ListingFilterValues["status"]) || undefined,
+  };
+
+  const [[userRow], { listings, total }, filterOptions] = await Promise.all([
+    db
+      .select({ currency: users.currency, username: users.username })
+      .from(users)
+      .where(eq(users.id, session.user.id)),
+    getListings(session.user.id, page, filters),
+    getListingFilterOptions(session.user.id),
+  ]);
+
   const currency = userRow?.currency ?? "USD";
   const username = userRow?.username ?? session.user.username;
 
@@ -123,18 +170,20 @@ export default async function MarketplacePage({
         username={username}
         configPanel={
           <Suspense fallback={<div className="py-4 text-sm text-muted-foreground">Loading...</div>}>
-            <AddonConfigPanelWrapper userId={session.user.id} />
+            <ConfigPanelWrapper userId={session.user.id} />
           </Suspense>
         }
+        activeFilters={filters}
+        filterOptions={filterOptions}
+        listingCount={listings.length}
       >
-        <Suspense fallback={<MarketplaceListingSkeletonGrid count={8} />}>
-          <ListingsGrid
-            userId={session.user.id}
-            currency={currency}
-            page={page}
-            searchParams={params}
-          />
-        </Suspense>
+        <ListingsGrid
+          listings={listings}
+          total={total}
+          currency={currency}
+          page={page}
+          searchParams={params}
+        />
       </MarketplacePageClient>
     </div>
   );
