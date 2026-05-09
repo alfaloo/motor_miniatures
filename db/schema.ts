@@ -16,6 +16,7 @@ export const listingStatusEnum = pgEnum("listing_status", [
   "sold_out",
   "retired",
   "pre_order",
+  "unpublished",
 ]);
 import { sql } from "drizzle-orm";
 
@@ -32,6 +33,11 @@ export const users = pgTable("users", {
   phone_number: varchar("phone_number", { length: 32 }),
   email_address: varchar("email_address", { length: 256 }),
   top_values_count: integer("top_values_count").notNull().default(12),
+  storefront_show_active: boolean("storefront_show_active").notNull().default(true),
+  storefront_show_pre_order: boolean("storefront_show_pre_order").notNull().default(true),
+  storefront_show_sold_out: boolean("storefront_show_sold_out").notNull().default(false),
+  storefront_show_retired: boolean("storefront_show_retired").notNull().default(false),
+  storefront_show_unpublished: boolean("storefront_show_unpublished").notNull().default(false),
   created_at: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -9,6 +9,7 @@ import { getListings } from "@/lib/actions/marketplace";
 import { MarketplaceListingCard } from "@/components/marketplace-listing-card";
 import { MarketplaceListingSkeletonGrid } from "@/components/marketplace-listing-skeleton";
 import { AddonConfigPanel } from "@/components/addon-config-panel";
+import { StorefrontVisibilityPanel } from "@/components/storefront-visibility-panel";
 import { MarketplacePageClient } from "@/components/marketplace-page-client";
 import { ToastOnMount } from "@/components/toast-on-mount";
 import { Pagination } from "@/components/pagination";
@@ -73,8 +74,19 @@ async function ListingsGrid({
   );
 }
 
-async function AddonConfigPanelWrapper({ userId }: { userId: string }) {
-  const [categories, options] = await Promise.all([
+async function ConfigPanelWrapper({ userId }: { userId: string }) {
+  const [userRow, categories, options] = await Promise.all([
+    db
+      .select({
+        storefront_show_active: users.storefront_show_active,
+        storefront_show_pre_order: users.storefront_show_pre_order,
+        storefront_show_sold_out: users.storefront_show_sold_out,
+        storefront_show_retired: users.storefront_show_retired,
+        storefront_show_unpublished: users.storefront_show_unpublished,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
     db
       .select({ id: addonCategories.id, name: addonCategories.name })
       .from(addonCategories)
@@ -92,7 +104,24 @@ async function AddonConfigPanelWrapper({ userId }: { userId: string }) {
       .orderBy(asc(addonOptions.sort_order), asc(addonOptions.created_at)),
   ]);
 
-  return <AddonConfigPanel categories={categories} options={options} />;
+  const visibilitySettings = userRow[0] ?? {
+    storefront_show_active: true,
+    storefront_show_pre_order: true,
+    storefront_show_sold_out: false,
+    storefront_show_retired: false,
+    storefront_show_unpublished: false,
+  };
+
+  return (
+    <div className="space-y-6">
+      <StorefrontVisibilityPanel settings={visibilitySettings} />
+      <div className="h-px bg-border" />
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">Add-on options</p>
+        <AddonConfigPanel categories={categories} options={options} />
+      </div>
+    </div>
+  );
 }
 
 export default async function MarketplacePage({
@@ -123,7 +152,7 @@ export default async function MarketplacePage({
         username={username}
         configPanel={
           <Suspense fallback={<div className="py-4 text-sm text-muted-foreground">Loading...</div>}>
-            <AddonConfigPanelWrapper userId={session.user.id} />
+            <ConfigPanelWrapper userId={session.user.id} />
           </Suspense>
         }
       >

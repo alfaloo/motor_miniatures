@@ -16,6 +16,7 @@ const STATUS_LABELS: Record<ListingStatus, string> = {
   sold_out: "Mark as Sold Out",
   retired: "Mark as Retired",
   pre_order: "Mark as Pre-order",
+  unpublished: "Mark as Unpublished",
 };
 
 interface MarketplacePageClientProps {
@@ -168,7 +169,7 @@ export function MarketplacePageClient({
           >
             <div className="flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-foreground">Configure Add-Ons</span>
+              <span className="font-medium text-foreground">Configure</span>
             </div>
             {configOpen ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />

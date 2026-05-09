@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { users, marketplaceListings, listingAddons } from "@/db/schema";
+import { users, marketplaceListings, listingAddons, type ListingStatus } from "@/db/schema";
 import { eq, desc, count, and, inArray } from "drizzle-orm";
 import { MarketplaceListingCard } from "@/components/marketplace-listing-card";
 import { MarketplaceListingSkeletonGrid } from "@/components/marketplace-listing-skeleton";
@@ -11,11 +11,22 @@ async function StorefrontGrid({
   userId,
   username,
   currency,
+  visibleStatuses,
 }: {
   userId: string;
   username: string;
   currency: string;
+  visibleStatuses: ListingStatus[];
 }) {
+  if (visibleStatuses.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <Tag className="h-16 w-16 text-muted-foreground" />
+        <p className="text-muted-foreground">No listings available right now.</p>
+      </div>
+    );
+  }
+
   const listings = await db
     .select({
       id: marketplaceListings.id,
@@ -36,7 +47,7 @@ async function StorefrontGrid({
     .where(
       and(
         eq(marketplaceListings.user_id, userId),
-        inArray(marketplaceListings.status, ["active", "pre_order"])
+        inArray(marketplaceListings.status, visibleStatuses)
       )
     )
     .groupBy(marketplaceListings.id)
@@ -76,7 +87,15 @@ export default async function StorefrontPage({
   const { username } = await params;
 
   const [userRow] = await db
-    .select({ id: users.id, currency: users.currency })
+    .select({
+      id: users.id,
+      currency: users.currency,
+      storefront_show_active: users.storefront_show_active,
+      storefront_show_pre_order: users.storefront_show_pre_order,
+      storefront_show_sold_out: users.storefront_show_sold_out,
+      storefront_show_retired: users.storefront_show_retired,
+      storefront_show_unpublished: users.storefront_show_unpublished,
+    })
     .from(users)
     .where(eq(users.username, username))
     .limit(1);
@@ -84,6 +103,18 @@ export default async function StorefrontPage({
   if (!userRow) {
     notFound();
   }
+
+  const visibleStatuses: ListingStatus[] = (
+    [
+      ["active", userRow.storefront_show_active],
+      ["pre_order", userRow.storefront_show_pre_order],
+      ["sold_out", userRow.storefront_show_sold_out],
+      ["retired", userRow.storefront_show_retired],
+      ["unpublished", userRow.storefront_show_unpublished],
+    ] as [ListingStatus, boolean][]
+  )
+    .filter(([, show]) => show)
+    .map(([status]) => status);
 
   return (
     <div className="space-y-6">
@@ -95,7 +126,12 @@ export default async function StorefrontPage({
 
       {/* Listings grid with Suspense */}
       <Suspense fallback={<MarketplaceListingSkeletonGrid count={8} />}>
-        <StorefrontGrid userId={userRow.id} username={username} currency={userRow.currency} />
+        <StorefrontGrid
+          userId={userRow.id}
+          username={username}
+          currency={userRow.currency}
+          visibleStatuses={visibleStatuses}
+        />
       </Suspense>
     </div>
   );
