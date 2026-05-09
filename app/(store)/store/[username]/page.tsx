@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/marketplace";
 import { StorefrontPageClient } from "@/components/storefront-page-client";
 import { Pagination } from "@/components/pagination";
+import { ThemeInitializer } from "@/components/theme-initializer";
 
 const PAGE_SIZE = 12;
 
@@ -92,6 +93,7 @@ export default async function StorefrontPage({
     .select({
       id: users.id,
       currency: users.currency,
+      theme: users.theme,
       storefront_show_active: users.storefront_show_active,
       storefront_show_pre_order: users.storefront_show_pre_order,
       storefront_show_sold_out: users.storefront_show_sold_out,
@@ -122,6 +124,7 @@ export default async function StorefrontPage({
   if (visibleStatuses.length === 0) {
     return (
       <div className="space-y-6">
+        <ThemeInitializer userTheme={userRow.theme ?? "dark"} />
         <div>
           <p className="text-sm font-medium text-muted-foreground">Motor Miniatures</p>
           <h1 className="text-2xl font-bold text-foreground">{username}&apos;s Customs</h1>
@@ -205,6 +208,7 @@ export default async function StorefrontPage({
 
   return (
     <div className="space-y-6">
+      <ThemeInitializer userTheme={userRow.theme ?? "dark"} />
       <div>
         <p className="text-sm font-medium text-muted-foreground">Motor Miniatures</p>
         <h1 className="text-2xl font-bold text-foreground">{username}&apos;s Customs</h1>

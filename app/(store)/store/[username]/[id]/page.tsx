@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ContactSeller } from "@/components/contact-seller";
+import { ThemeInitializer } from "@/components/theme-initializer";
 import { ChevronRight } from "lucide-react";
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -32,6 +33,7 @@ export default async function PublicListingDetailPage({
       .select({
         id: users.id,
         currency: users.currency,
+        theme: users.theme,
         phoneNumber: users.phone_number,
         emailAddress: users.email_address,
       })
@@ -60,6 +62,7 @@ export default async function PublicListingDetailPage({
 
   return (
     <div className="space-y-6">
+      <ThemeInitializer userTheme={userRow.theme ?? "dark"} />
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Link href={`/store/${username}`} className="hover:text-foreground transition-colors">
