@@ -322,6 +322,44 @@ export async function getListings(userId: string, page: number = 1) {
 
 export type ListingWithAddonCount = Awaited<ReturnType<typeof getListings>>["listings"][number];
 
+export async function getListingFilterOptions(
+  userId: string,
+  visibleStatuses?: ListingStatus[]
+): Promise<{ brands: string[]; makes: string[]; scales: string[] }> {
+  const baseCondition = eq(marketplaceListings.user_id, userId);
+  const condition =
+    visibleStatuses && visibleStatuses.length > 0
+      ? and(baseCondition, inArray(marketplaceListings.status, visibleStatuses))
+      : baseCondition;
+
+  const [brandsResult, makesResult, scalesResult] = await Promise.all([
+    db
+      .selectDistinct({ value: marketplaceListings.brand })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.make })
+      .from(marketplaceListings)
+      .where(condition),
+    db
+      .selectDistinct({ value: marketplaceListings.scale })
+      .from(marketplaceListings)
+      .where(condition),
+  ]);
+
+  const toSortedStrings = (rows: { value: string | null }[]) =>
+    rows
+      .map((r) => r.value)
+      .filter((v): v is string => v !== null)
+      .sort();
+
+  return {
+    brands: toSortedStrings(brandsResult),
+    makes: toSortedStrings(makesResult),
+    scales: toSortedStrings(scalesResult),
+  };
+}
+
 type AddonOptionWithCategory = {
   id: string;
   name: string;
