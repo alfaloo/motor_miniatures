@@ -24,7 +24,7 @@ async function getSession() {
 async function recomputeTotalPrice(tx: DbTx, listingId: string) {
   const [result] = await tx
     .select({
-      total: sql<number>`COALESCE(SUM(${addonOptions.price}), 0)`,
+      total: sql<number>`COALESCE(SUM(${addonOptions.price} * ${listingAddons.quantity}), 0)`,
     })
     .from(listingAddons)
     .innerJoin(addonOptions, eq(listingAddons.addon_option_id, addonOptions.id))
