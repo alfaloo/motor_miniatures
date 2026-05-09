@@ -138,7 +138,7 @@ export default async function ListingDetailPage({
                   }
                 />
                 <DetailRow
-                  label="Status"
+                  label="Availability"
                   value={listing.is_made_to_order ? "Made to Order" : "Ready Stock"}
                 />
                 {listing.is_made_to_order && listing.preorder_wait_days != null && (

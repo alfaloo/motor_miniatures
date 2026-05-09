@@ -23,9 +23,10 @@ interface AddonOptionRowProps {
     price: number;
   };
   onUpdate?: (name: string, price: number) => void;
+  onDelete?: () => void;
 }
 
-export function AddonOptionRow({ option, onUpdate }: AddonOptionRowProps) {
+export function AddonOptionRow({ option, onUpdate, onDelete }: AddonOptionRowProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -100,6 +101,7 @@ export function AddonOptionRow({ option, onUpdate }: AddonOptionRowProps) {
         setWarningOpen(true);
       } else {
         toast.success("Option deleted");
+        onDelete?.();
         router.refresh();
       }
     });
@@ -110,6 +112,7 @@ export function AddonOptionRow({ option, onUpdate }: AddonOptionRowProps) {
       await forceDeleteOption(option.id);
       setWarningOpen(false);
       toast.success("Option deleted");
+      onDelete?.();
       router.refresh();
     });
   }

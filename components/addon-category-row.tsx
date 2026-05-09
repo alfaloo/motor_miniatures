@@ -23,6 +23,7 @@ interface AddonCategoryRowProps {
   };
   isOpen: boolean;
   onToggle: () => void;
+  onDelete?: () => void;
   children?: React.ReactNode;
 }
 
@@ -30,6 +31,7 @@ export function AddonCategoryRow({
   category,
   isOpen,
   onToggle,
+  onDelete,
   children,
 }: AddonCategoryRowProps) {
   const router = useRouter();
@@ -100,6 +102,7 @@ export function AddonCategoryRow({
         setWarningOpen(true);
       } else {
         toast.success("Category deleted");
+        onDelete?.();
         router.refresh();
       }
     });
@@ -110,6 +113,7 @@ export function AddonCategoryRow({
       await forceDeleteCategory(category.id);
       setWarningOpen(false);
       toast.success("Category deleted");
+      onDelete?.();
       router.refresh();
     });
   }
