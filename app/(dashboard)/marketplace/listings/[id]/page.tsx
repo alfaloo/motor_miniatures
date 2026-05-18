@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ContactSeller } from "@/components/contact-seller";
 import { DeleteListingButton } from "./delete-button";
+import { PrivateInfoPanel } from "@/components/private-info-panel";
 import { ChevronRight, Pencil } from "lucide-react";
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default async function ListingDetailPage({
         username: users.username,
         phoneNumber: users.phone_number,
         emailAddress: users.email_address,
+        collectingSinceYear: users.collecting_since_year,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -192,6 +194,15 @@ export default async function ListingDetailPage({
               <span className="text-foreground">{formatPrice(listing.total_price, currency)}</span>
             </div>
           </div>
+
+          {/* Panel 4 — Private Info */}
+          <PrivateInfoPanel
+            listingId={listing.id}
+            privateComments={listing.private_comments}
+            salesRecords={listing.sales_records}
+            totalPrice={listing.total_price}
+            collectingSinceYear={userRow?.collectingSinceYear ?? new Date().getFullYear()}
+          />
         </div>
 
         {/* Right column */}
