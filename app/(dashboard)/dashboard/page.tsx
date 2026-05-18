@@ -4,6 +4,7 @@ import { items, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import DashboardCharts from "./dashboard-charts";
+import MarketplaceCharts from "./marketplace-charts";
 import { getMarketplaceStats } from "@/lib/actions/marketplace";
 
 function formatDollars(amount: number): string {
@@ -139,6 +140,21 @@ export default async function DashboardPage() {
     { label: "Models Sold", value: marketplaceStats.modelsSold.toLocaleString() },
   ];
 
+  // Marketplace chart data — map raw year/month to label using the same months array
+  const saleValueByMonth = months.map(({ year, month, label }) => {
+    const entry = marketplaceStats.saleValuePerMonth.find(
+      (e) => e.year === year && e.month === month
+    );
+    return { month: label, value: entry?.value ?? 0 };
+  });
+
+  const modelsSoldByMonth = months.map(({ year, month, label }) => {
+    const entry = marketplaceStats.modelsSoldPerMonth.find(
+      (e) => e.year === year && e.month === month
+    );
+    return { month: label, count: entry?.count ?? 0 };
+  });
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
@@ -188,6 +204,16 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Marketplace Charts */}
+      <MarketplaceCharts
+        saleValuePerMonth={saleValueByMonth}
+        modelsSoldPerMonth={modelsSoldByMonth}
+        topBrandsSold={marketplaceStats.topBrandsSold}
+        topListingsSold={marketplaceStats.topListingsSold}
+        monthsLookBack={monthsLookBack}
+        topValuesCount={topValuesCount}
+      />
     </div>
   );
 }
