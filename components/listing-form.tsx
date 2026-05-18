@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Check, X, Trash2 } from "lucide-react";
+import { Loader2, Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,23 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listingSchema, ListingFormData, salesRecordSchema } from "@/lib/validations/listing";
-import { createListing, updateListing, updateListingImageUrl, updateListingPrivateInfo } from "@/lib/actions/marketplace";
+import { listingSchema, ListingFormData } from "@/lib/validations/listing";
+import { createListing, updateListing, updateListingImageUrl } from "@/lib/actions/marketplace";
 import { createOption } from "@/lib/actions/addons";
 import { formatPrice } from "@/lib/currency";
-import type { SalesRecord } from "@/db/schema";
-
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-function sortSalesRecords(records: SalesRecord[]): SalesRecord[] {
-  return [...records].sort((a, b) => {
-    if (b.sale_year !== a.sale_year) return b.sale_year - a.sale_year;
-    return b.sale_month - a.sale_month;
-  });
-}
 
 interface AddonCategory {
   id: string;
@@ -66,10 +53,6 @@ interface ListingFormProps {
   };
   listingId?: string;
   displayImageUrl?: string | null;
-  privateComments?: string | null;
-  initialSalesRecords?: SalesRecord[];
-  collectingSinceYear?: number;
-  totalPrice?: number;
 }
 
 export function ListingForm({
@@ -79,14 +62,8 @@ export function ListingForm({
   initialData,
   listingId,
   displayImageUrl,
-  privateComments: initialPrivateComments,
-  initialSalesRecords,
-  collectingSinceYear,
-  totalPrice,
 }: ListingFormProps) {
   const router = useRouter();
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
 
   const [localOptions, setLocalOptions] = useState<AddonOption[]>(options);
   const [checkedAddonIds, setCheckedAddonIds] = useState<Set<string>>(
@@ -106,103 +83,6 @@ export function ListingForm({
   const [imageError, setImageError] = useState<string | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Private Info state
-  const [privateComments, setPrivateComments] = useState(initialPrivateComments ?? "");
-  const [salesRecords, setSalesRecords] = useState<SalesRecord[]>(initialSalesRecords ?? []);
-  const [isSalePending, startSaleTransition] = useTransition();
-  const [addSaleOpen, setAddSaleOpen] = useState(false);
-  const [addSaleYear, setAddSaleYear] = useState(String(currentYear));
-  const [addSaleMonth, setAddSaleMonth] = useState(String(currentMonth));
-  const [addSalePrice, setAddSalePrice] = useState("");
-  const [addSaleError, setAddSaleError] = useState<string | null>(null);
-  const saleYearInputRef = useRef<HTMLInputElement>(null);
-
-  function openSaleForm() {
-    setAddSaleYear(String(currentYear));
-    setAddSaleMonth(String(currentMonth));
-    setAddSalePrice(listingId && totalPrice != null ? String(totalPrice) : "");
-    setAddSaleError(null);
-    setAddSaleOpen(true);
-    setTimeout(() => saleYearInputRef.current?.focus(), 0);
-  }
-
-  function closeSaleForm() {
-    setAddSaleOpen(false);
-    setAddSaleError(null);
-  }
-
-  function handleSaleSubmit() {
-    if (!listingId && (!addSalePrice || addSalePrice.trim() === "")) {
-      setAddSaleError("Sale price is required");
-      return;
-    }
-
-    const year = parseInt(addSaleYear, 10);
-    const month = parseInt(addSaleMonth, 10);
-    const price = parseInt(addSalePrice, 10);
-
-    const validation = salesRecordSchema.safeParse({
-      id: "00000000-0000-0000-0000-000000000000",
-      sale_year: year,
-      sale_month: month,
-      sale_price: price,
-    });
-
-    if (!validation.success) {
-      setAddSaleError(validation.error.errors[0]?.message ?? "Invalid input");
-      return;
-    }
-
-    const newRecord: SalesRecord = {
-      id: crypto.randomUUID(),
-      sale_year: year,
-      sale_month: month,
-      sale_price: price,
-    };
-
-    if (listingId) {
-      const optimistic = [newRecord, ...salesRecords];
-      setSalesRecords(optimistic);
-      startSaleTransition(async () => {
-        const result = await updateListingPrivateInfo(
-          listingId,
-          privateComments.trim() || null,
-          optimistic
-        );
-        if (result.success) {
-          setAddSaleOpen(false);
-          setAddSaleError(null);
-        } else {
-          setSalesRecords(salesRecords);
-          setAddSaleError(result.error ?? "Failed to save record");
-        }
-      });
-    } else {
-      setSalesRecords([newRecord, ...salesRecords]);
-      setAddSaleOpen(false);
-      setAddSaleError(null);
-    }
-  }
-
-  function handleSaleDelete(id: string) {
-    const prevRecords = salesRecords;
-    const updated = salesRecords.filter((r) => r.id !== id);
-    setSalesRecords(updated);
-
-    if (listingId) {
-      startSaleTransition(async () => {
-        const result = await updateListingPrivateInfo(
-          listingId,
-          privateComments.trim() || null,
-          updated
-        );
-        if (!result.success) {
-          setSalesRecords(prevRecords);
-        }
-      });
-    }
-  }
 
   const {
     register,
@@ -342,9 +222,6 @@ export function ListingForm({
       formData.append("addon_option_ids", id);
       formData.append("addon_option_quantities", String(addonQuantities[id] ?? 1));
     }
-
-    formData.append("privateComments", privateComments ?? "");
-    formData.append("salesRecords", JSON.stringify(salesRecords));
 
     if (listingId) {
       // Update flow
@@ -854,137 +731,6 @@ export function ListingForm({
             </div>
           );
         })}
-      </div>
-
-      {/* Private Info Section */}
-      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-        <h2 className="text-foreground font-semibold text-lg">Private Info</h2>
-
-        {/* Comments */}
-        <div className="space-y-1.5">
-          <Label htmlFor="privateComments" className="text-foreground">
-            Comments
-          </Label>
-          <textarea
-            id="privateComments"
-            value={privateComments}
-            onChange={(e) => setPrivateComments(e.target.value)}
-            placeholder="Internal notes…"
-            rows={3}
-            className="w-full resize-none rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-
-        {/* Sales Records */}
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Sales Records
-          </p>
-
-          <div className="space-y-0.5">
-            {sortSalesRecords(salesRecords).map((record) => (
-              <div key={record.id} className="flex items-center gap-2 py-1 group">
-                <span className="flex-1 text-sm text-foreground">
-                  {MONTH_NAMES[record.sale_month - 1]?.slice(0, 3)} {record.sale_year}
-                </span>
-                <span className="text-sm text-muted-foreground tabular-nums">
-                  ${record.sale_price.toLocaleString()}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-red-400/70 hover:text-red-400 hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  onClick={() => handleSaleDelete(record.id)}
-                  disabled={isSalePending}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          {addSaleOpen ? (
-            <div className="mt-2 space-y-1.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Input
-                  ref={saleYearInputRef}
-                  type="number"
-                  value={addSaleYear}
-                  onChange={(e) => setAddSaleYear(e.target.value)}
-                  placeholder="Year"
-                  min={collectingSinceYear ?? 1900}
-                  max={currentYear + 1}
-                  step="1"
-                  className="h-8 text-sm bg-secondary border-border w-20"
-                  disabled={isSalePending}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") { e.preventDefault(); handleSaleSubmit(); }
-                    if (e.key === "Escape") closeSaleForm();
-                  }}
-                />
-                <select
-                  value={addSaleMonth}
-                  onChange={(e) => setAddSaleMonth(e.target.value)}
-                  disabled={isSalePending}
-                  className="h-8 rounded-md border border-border bg-secondary px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 w-32"
-                >
-                  {MONTH_NAMES.map((name, i) => (
-                    <option key={i + 1} value={String(i + 1)}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  type="number"
-                  value={addSalePrice}
-                  onChange={(e) => setAddSalePrice(e.target.value)}
-                  placeholder="Price"
-                  min="0"
-                  step="1"
-                  className="h-8 text-sm bg-secondary border-border w-24"
-                  disabled={isSalePending}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") { e.preventDefault(); handleSaleSubmit(); }
-                    if (e.key === "Escape") closeSaleForm();
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-900/20 shrink-0"
-                  onClick={handleSaleSubmit}
-                  disabled={isSalePending}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-                  onClick={closeSaleForm}
-                  disabled={isSalePending}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              {addSaleError && <p className="text-xs text-red-400">{addSaleError}</p>}
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-1 h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2 pl-1"
-              onClick={openSaleForm}
-            >
-              <Plus className="h-3 w-3" />
-              Add sale record
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* Running total */}

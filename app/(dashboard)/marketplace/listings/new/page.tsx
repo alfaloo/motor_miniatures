@@ -14,11 +14,10 @@ export default async function NewListingPage() {
   }
 
   const [userRow] = await db
-    .select({ currency: users.currency, collecting_since_year: users.collecting_since_year })
+    .select({ currency: users.currency })
     .from(users)
     .where(eq(users.id, session.user.id));
   const currency = userRow?.currency ?? "USD";
-  const collectingSinceYear = userRow?.collecting_since_year ?? new Date().getFullYear();
 
   const [categories, options] = await Promise.all([
     db
@@ -55,7 +54,6 @@ export default async function NewListingPage() {
         categories={categories}
         options={options}
         currency={currency}
-        collectingSinceYear={collectingSinceYear}
       />
     </div>
   );

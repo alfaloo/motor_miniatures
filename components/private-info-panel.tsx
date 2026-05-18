@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Check, X, Trash2 } from "lucide-react";
+import { Plus, Check, X, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateListingPrivateInfo } from "@/lib/actions/marketplace";
@@ -65,7 +65,17 @@ export function PrivateInfoPanel({
   const [addError, setAddError] = useState<string | null>(null);
   const yearInputRef = useRef<HTMLInputElement>(null);
 
+  // Edit form state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editYear, setEditYear] = useState("");
+  const [editMonth, setEditMonth] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const editYearInputRef = useRef<HTMLInputElement>(null);
+
   function openAddForm() {
+    setEditingId(null);
+    setEditError(null);
     setAddYear(String(currentYear));
     setAddMonth(String(currentMonth));
     setAddPrice(String(totalPrice));
@@ -77,6 +87,63 @@ export function PrivateInfoPanel({
   function closeAddForm() {
     setAddFormOpen(false);
     setAddError(null);
+  }
+
+  function openEditForm(record: SalesRecord) {
+    setAddFormOpen(false);
+    setAddError(null);
+    setEditingId(record.id);
+    setEditYear(String(record.sale_year));
+    setEditMonth(String(record.sale_month));
+    setEditPrice(String(record.sale_price));
+    setEditError(null);
+    setTimeout(() => editYearInputRef.current?.focus(), 0);
+  }
+
+  function closeEditForm() {
+    setEditingId(null);
+    setEditError(null);
+  }
+
+  function handleEditSave() {
+    const year = parseInt(editYear, 10);
+    const month = parseInt(editMonth, 10);
+    const price = parseInt(editPrice, 10);
+
+    const validation = salesRecordSchema.safeParse({
+      id: "00000000-0000-0000-0000-000000000000",
+      sale_year: year,
+      sale_month: month,
+      sale_price: price,
+    });
+
+    if (!validation.success) {
+      setEditError(validation.error.errors[0]?.message ?? "Invalid input");
+      return;
+    }
+
+    const updatedRecords = salesRecords.map((r) =>
+      r.id === editingId
+        ? { ...r, sale_year: year, sale_month: month, sale_price: price }
+        : r
+    );
+    const prev = salesRecords;
+    setSalesRecords(updatedRecords);
+
+    startSalesTransition(async () => {
+      const result = await updateListingPrivateInfo(
+        listingId,
+        comments.trim() || null,
+        updatedRecords
+      );
+      if (result.success) {
+        setEditingId(null);
+        setEditError(null);
+      } else {
+        setSalesRecords(prev);
+        setEditError(result.error ?? "Failed to save record");
+      }
+    });
   }
 
   function handleCommentsBlur() {
@@ -180,31 +247,110 @@ export function PrivateInfoPanel({
 
         {/* Record rows */}
         <div className="space-y-0.5">
-          {sortedRecords.map((record) => (
-            <div key={record.id} className="flex items-center gap-2 py-1 group">
-              <span className="flex-1 text-sm text-foreground">
-                {formatSaleRow(record)}
-              </span>
-              <span className="text-sm text-muted-foreground tabular-nums">
-                {formatSalePrice(record.sale_price)}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-red-400/70 hover:text-red-400 hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                onClick={() => handleDelete(record.id)}
-                disabled={isSalesPending}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
+          {sortedRecords.map((record) =>
+            editingId === record.id ? (
+              <div key={record.id} className="flex flex-col gap-1.5 py-1">
+                <div className="flex items-center gap-2 w-full">
+                  <input
+                    ref={editYearInputRef}
+                    type="number"
+                    value={editYear}
+                    onChange={(e) => setEditYear(e.target.value)}
+                    placeholder="Year"
+                    min={collectingSinceYear}
+                    max={currentYear + 1}
+                    step="1"
+                    disabled={isSalesPending}
+                    className="h-8 w-20 shrink-0 rounded-md border border-border bg-secondary px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleEditSave();
+                      if (e.key === "Escape") closeEditForm();
+                    }}
+                  />
+                  <select
+                    value={editMonth}
+                    onChange={(e) => setEditMonth(e.target.value)}
+                    disabled={isSalesPending}
+                    className="h-8 flex-1 min-w-0 rounded-md border border-border bg-secondary px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                  >
+                    {MONTH_NAMES.map((name, i) => (
+                      <option key={i + 1} value={String(i + 1)}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    placeholder="Price"
+                    min="0"
+                    step="1"
+                    disabled={isSalesPending}
+                    className="h-8 w-24 shrink-0 rounded-md border border-border bg-secondary px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleEditSave();
+                      if (e.key === "Escape") closeEditForm();
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-900/20 shrink-0"
+                    onClick={handleEditSave}
+                    disabled={isSalesPending}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                    onClick={closeEditForm}
+                    disabled={isSalesPending}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                {editError && <p className="text-xs text-red-400">{editError}</p>}
+              </div>
+            ) : (
+              <div key={record.id} className="flex items-center gap-2 py-1 group">
+                <span className="flex-1 text-sm text-foreground">
+                  {formatSaleRow(record)}
+                </span>
+                <span className="text-sm text-muted-foreground tabular-nums">
+                  {formatSalePrice(record.sale_price)}
+                </span>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                    onClick={() => openEditForm(record)}
+                    disabled={isSalesPending}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-red-400/70 hover:text-red-400 hover:bg-red-900/20 shrink-0"
+                    onClick={() => handleDelete(record.id)}
+                    disabled={isSalesPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )
+          )}
         </div>
 
         {/* Add form or Add button */}
         {addFormOpen ? (
           <div className="mt-2 space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 w-full">
               <Input
                 ref={yearInputRef}
                 type="number"
@@ -214,7 +360,7 @@ export function PrivateInfoPanel({
                 min={collectingSinceYear}
                 max={currentYear + 1}
                 step="1"
-                className="h-8 text-sm bg-secondary border-border w-20"
+                className="h-8 text-sm bg-secondary border-border w-20 shrink-0"
                 disabled={isSalesPending}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddSubmit();
@@ -225,7 +371,7 @@ export function PrivateInfoPanel({
                 value={addMonth}
                 onChange={(e) => setAddMonth(e.target.value)}
                 disabled={isSalesPending}
-                className="h-8 rounded-md border border-border bg-secondary px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 w-32"
+                className="h-8 flex-1 min-w-0 rounded-md border border-border bg-secondary px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
               >
                 {MONTH_NAMES.map((name, i) => (
                   <option key={i + 1} value={String(i + 1)}>
@@ -240,7 +386,7 @@ export function PrivateInfoPanel({
                 placeholder="Price"
                 min="0"
                 step="1"
-                className="h-8 text-sm bg-secondary border-border w-24"
+                className="h-8 text-sm bg-secondary border-border w-24 shrink-0"
                 disabled={isSalesPending}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddSubmit();

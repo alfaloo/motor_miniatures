@@ -77,13 +77,6 @@ export async function createListing(formData: FormData) {
 
   const totalPrice = await computeTotalPrice(addonOptionsWithQty);
 
-  const privateComments = (formData.get("privateComments") as string | null) || null;
-  const salesRecordsRaw = formData.get("salesRecords") as string | null;
-  let salesRecords: SalesRecord[] = [];
-  if (salesRecordsRaw) {
-    try { salesRecords = JSON.parse(salesRecordsRaw) as SalesRecord[]; } catch {}
-  }
-
   const [listing] = await db
     .insert(marketplaceListings)
     .values({
@@ -99,8 +92,6 @@ export async function createListing(formData: FormData) {
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
       status: "active",
-      private_comments: privateComments,
-      sales_records: salesRecords,
     })
     .returning({ id: marketplaceListings.id });
 
@@ -155,13 +146,6 @@ export async function updateListing(id: string, formData: FormData) {
 
   const totalPrice = await computeTotalPrice(addonOptionsWithQty);
 
-  const privateComments = (formData.get("privateComments") as string | null) || null;
-  const salesRecordsRaw = formData.get("salesRecords") as string | null;
-  let salesRecords: SalesRecord[] = [];
-  if (salesRecordsRaw) {
-    try { salesRecords = JSON.parse(salesRecordsRaw) as SalesRecord[]; } catch {}
-  }
-
   const removeImage = formData.get("remove_image") === "true";
   const newImageUrl = formData.get("display_image_url") as string | null;
 
@@ -199,8 +183,6 @@ export async function updateListing(id: string, formData: FormData) {
       is_made_to_order: data.is_made_to_order,
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
-      private_comments: privateComments,
-      sales_records: salesRecords,
       ...(removeImage ? { display_image_url: null } : newImageUrl ? { display_image_url: newImageUrl } : {}),
     })
     .where(eq(marketplaceListings.id, id));
