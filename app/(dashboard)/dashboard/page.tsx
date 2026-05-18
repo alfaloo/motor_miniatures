@@ -4,6 +4,7 @@ import { items, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import DashboardCharts from "./dashboard-charts";
+import { getMarketplaceStats } from "@/lib/actions/marketplace";
 
 function formatDollars(amount: number): string {
   return `$${amount.toLocaleString()}`;
@@ -137,9 +138,24 @@ export default async function DashboardPage() {
     .slice(0, topValuesCount)
     .map(([name, count]) => ({ name, count }));
 
+  const marketplaceStats = await getMarketplaceStats(userId, {
+    monthsLookBack,
+    topValuesCount,
+  });
+
+  const marketplaceCards = [
+    { label: "Total Sale Value", value: formatDollars(marketplaceStats.totalSaleValue) },
+    { label: "Models Sold", value: marketplaceStats.modelsSold.toLocaleString() },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
+
+      {/* Collection Stats Section */}
+      <h2 className="text-lg font-medium text-foreground border-b border-border pb-2 mb-6">
+        Collection Stats
+      </h2>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
@@ -163,6 +179,24 @@ export default async function DashboardPage() {
         monthsLookBack={monthsLookBack}
         topValuesCount={topValuesCount}
       />
+
+      {/* Marketplace Stats Section */}
+      <h2 className="text-lg font-medium text-foreground border-b border-border pb-2 mb-6 mt-10">
+        Marketplace Stats
+      </h2>
+
+      {/* Marketplace Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        {marketplaceCards.map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
