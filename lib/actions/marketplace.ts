@@ -10,7 +10,7 @@ import {
   addonCategories,
   users,
 } from "@/db/schema";
-import type { ListingStatus } from "@/db/schema";
+import type { ListingStatus, SalesRecord } from "@/db/schema";
 import { eq, and, inArray, sql, desc, asc, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { listingSchema } from "@/lib/validations/listing";
@@ -77,6 +77,13 @@ export async function createListing(formData: FormData) {
 
   const totalPrice = await computeTotalPrice(addonOptionsWithQty);
 
+  const privateComments = (formData.get("privateComments") as string | null) || null;
+  const salesRecordsRaw = formData.get("salesRecords") as string | null;
+  let salesRecords: SalesRecord[] = [];
+  if (salesRecordsRaw) {
+    try { salesRecords = JSON.parse(salesRecordsRaw) as SalesRecord[]; } catch {}
+  }
+
   const [listing] = await db
     .insert(marketplaceListings)
     .values({
@@ -92,6 +99,8 @@ export async function createListing(formData: FormData) {
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
       status: "active",
+      private_comments: privateComments,
+      sales_records: salesRecords,
     })
     .returning({ id: marketplaceListings.id });
 
@@ -146,6 +155,13 @@ export async function updateListing(id: string, formData: FormData) {
 
   const totalPrice = await computeTotalPrice(addonOptionsWithQty);
 
+  const privateComments = (formData.get("privateComments") as string | null) || null;
+  const salesRecordsRaw = formData.get("salesRecords") as string | null;
+  let salesRecords: SalesRecord[] = [];
+  if (salesRecordsRaw) {
+    try { salesRecords = JSON.parse(salesRecordsRaw) as SalesRecord[]; } catch {}
+  }
+
   const removeImage = formData.get("remove_image") === "true";
   const newImageUrl = formData.get("display_image_url") as string | null;
 
@@ -183,6 +199,8 @@ export async function updateListing(id: string, formData: FormData) {
       is_made_to_order: data.is_made_to_order,
       preorder_wait_days: data.is_made_to_order ? (data.preorder_wait_days ?? null) : null,
       total_price: totalPrice,
+      private_comments: privateComments,
+      sales_records: salesRecords,
       ...(removeImage ? { display_image_url: null } : newImageUrl ? { display_image_url: newImageUrl } : {}),
     })
     .where(eq(marketplaceListings.id, id));
@@ -223,6 +241,37 @@ export async function updateListing(id: string, formData: FormData) {
   revalidatePath("/marketplace");
   revalidatePath(`/marketplace/listings/${id}`);
   redirect("/marketplace?toast=listing_updated");
+}
+
+export async function updateListingPrivateInfo(
+  listingId: string,
+  privateComments: string | null,
+  salesRecords: SalesRecord[]
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getSession();
+
+  const [existing] = await db
+    .select({ id: marketplaceListings.id })
+    .from(marketplaceListings)
+    .where(
+      and(
+        eq(marketplaceListings.id, listingId),
+        eq(marketplaceListings.user_id, session.user.id)
+      )
+    )
+    .limit(1);
+
+  if (!existing) {
+    return { success: false, error: "Listing not found or access denied" };
+  }
+
+  await db
+    .update(marketplaceListings)
+    .set({ private_comments: privateComments, sales_records: salesRecords })
+    .where(eq(marketplaceListings.id, listingId));
+
+  revalidatePath(`/marketplace/listings/${listingId}`);
+  return { success: true };
 }
 
 export async function deleteListing(id: string) {
@@ -436,6 +485,8 @@ export type ListingDetail = {
   total_price: number;
   display_image_url: string | null;
   created_at: Date;
+  private_comments: string | null;
+  sales_records: SalesRecord[];
   addon_groups: ListingDetailAddonGroup[];
 };
 
