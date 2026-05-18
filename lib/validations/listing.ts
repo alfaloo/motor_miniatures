@@ -46,3 +46,10 @@ export const listingSchema = z.object({
 });
 
 export type ListingFormData = z.infer<typeof listingSchema>;
+
+export const salesRecordSchema = z.object({
+  id: z.string().uuid(),
+  sale_year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
+  sale_month: z.number().int().min(1).max(12),
+  sale_price: z.number().int().min(0),
+});
