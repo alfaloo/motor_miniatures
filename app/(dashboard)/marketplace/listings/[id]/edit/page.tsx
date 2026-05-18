@@ -23,7 +23,7 @@ export default async function EditListingPage({
   const [listing, userRow, categories, options] = await Promise.all([
     getListingDetail(id),
     db
-      .select({ currency: users.currency })
+      .select({ currency: users.currency, collecting_since_year: users.collecting_since_year })
       .from(users)
       .where(eq(users.id, session.user.id))
       .then((rows) => rows[0]),
@@ -49,6 +49,7 @@ export default async function EditListingPage({
   }
 
   const currency = userRow?.currency ?? "USD";
+  const collectingSinceYear = userRow?.collecting_since_year ?? new Date().getFullYear();
 
   // Extract selected addon_option_ids and quantities from the listing's addon_groups
   const selectedAddonOptionIds = listing.addon_groups.flatMap((group) =>
@@ -107,6 +108,10 @@ export default async function EditListingPage({
         initialData={initialData}
         listingId={id}
         displayImageUrl={listing.display_image_url}
+        privateComments={listing.private_comments}
+        initialSalesRecords={listing.sales_records}
+        collectingSinceYear={collectingSinceYear}
+        totalPrice={listing.total_price}
       />
     </div>
   );
