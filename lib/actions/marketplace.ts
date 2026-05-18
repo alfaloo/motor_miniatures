@@ -10,7 +10,7 @@ import {
   addonCategories,
   users,
 } from "@/db/schema";
-import type { ListingStatus } from "@/db/schema";
+import type { ListingStatus, SalesRecord } from "@/db/schema";
 import { eq, and, inArray, sql, desc, asc, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { listingSchema } from "@/lib/validations/listing";
@@ -225,6 +225,37 @@ export async function updateListing(id: string, formData: FormData) {
   redirect("/marketplace?toast=listing_updated");
 }
 
+export async function updateListingPrivateInfo(
+  listingId: string,
+  privateComments: string | null,
+  salesRecords: SalesRecord[]
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getSession();
+
+  const [existing] = await db
+    .select({ id: marketplaceListings.id })
+    .from(marketplaceListings)
+    .where(
+      and(
+        eq(marketplaceListings.id, listingId),
+        eq(marketplaceListings.user_id, session.user.id)
+      )
+    )
+    .limit(1);
+
+  if (!existing) {
+    return { success: false, error: "Listing not found or access denied" };
+  }
+
+  await db
+    .update(marketplaceListings)
+    .set({ private_comments: privateComments, sales_records: salesRecords })
+    .where(eq(marketplaceListings.id, listingId));
+
+  revalidatePath(`/marketplace/listings/${listingId}`);
+  return { success: true };
+}
+
 export async function deleteListing(id: string) {
   const session = await getSession();
 
@@ -436,6 +467,8 @@ export type ListingDetail = {
   total_price: number;
   display_image_url: string | null;
   created_at: Date;
+  private_comments: string | null;
+  sales_records: SalesRecord[];
   addon_groups: ListingDetailAddonGroup[];
 };
 
@@ -474,6 +507,148 @@ export async function bulkUpdateListingStatus(
   } catch {
     return { success: false, error: "Failed to update listing status" };
   }
+}
+
+export async function getMarketplaceStats(
+  userId: string,
+  settings: { monthsLookBack: number; topValuesCount: number }
+): Promise<{
+  totalSaleValue: number;
+  modelsSold: number;
+  saleValuePerMonth: Array<{ year: number; month: number; value: number }>;
+  modelsSoldPerMonth: Array<{ year: number; month: number; count: number }>;
+  topBrandsSold: Array<{ make: string; quantity: number }>;
+  topListingsSold: Array<{ label: string; quantity: number }>;
+}> {
+  const { monthsLookBack, topValuesCount } = settings;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  // Oldest month in the lookback window
+  let startMonth = currentMonth - (monthsLookBack - 1);
+  let startYear = currentYear;
+  while (startMonth <= 0) {
+    startMonth += 12;
+    startYear -= 1;
+  }
+
+  // Use year*12+month as a single comparable integer
+  const startKey = startYear * 12 + startMonth;
+  const endKey = currentYear * 12 + currentMonth;
+
+  const [totalResult, modelsSoldResult, saleValuePerMonthResult, modelsSoldPerMonthResult, topBrandsResult, topListingsResult] =
+    await Promise.all([
+      db.execute(sql`
+        SELECT COALESCE(SUM((record->>'sale_price')::int), 0) AS total
+        FROM marketplace_listings ml
+        CROSS JOIN LATERAL jsonb_array_elements(ml.sales_records) AS record
+        WHERE ml.user_id = ${userId}
+      `),
+      db.execute(sql`
+        SELECT COUNT(*) AS total
+        FROM marketplace_listings ml
+        CROSS JOIN LATERAL jsonb_array_elements(ml.sales_records) AS record
+        WHERE ml.user_id = ${userId}
+      `),
+      db.execute(sql`
+        SELECT
+          (record->>'sale_year')::int AS year,
+          (record->>'sale_month')::int AS month,
+          SUM((record->>'sale_price')::int) AS value
+        FROM marketplace_listings ml
+        CROSS JOIN LATERAL jsonb_array_elements(ml.sales_records) AS record
+        WHERE ml.user_id = ${userId}
+          AND ((record->>'sale_year')::int * 12 + (record->>'sale_month')::int) BETWEEN ${startKey} AND ${endKey}
+        GROUP BY (record->>'sale_year')::int, (record->>'sale_month')::int
+      `),
+      db.execute(sql`
+        SELECT
+          (record->>'sale_year')::int AS year,
+          (record->>'sale_month')::int AS month,
+          COUNT(*) AS count
+        FROM marketplace_listings ml
+        CROSS JOIN LATERAL jsonb_array_elements(ml.sales_records) AS record
+        WHERE ml.user_id = ${userId}
+          AND ((record->>'sale_year')::int * 12 + (record->>'sale_month')::int) BETWEEN ${startKey} AND ${endKey}
+        GROUP BY (record->>'sale_year')::int, (record->>'sale_month')::int
+      `),
+      db.execute(sql`
+        SELECT ml.make, COUNT(*) AS quantity
+        FROM marketplace_listings ml
+        CROSS JOIN LATERAL jsonb_array_elements(ml.sales_records) AS record
+        WHERE ml.user_id = ${userId}
+        GROUP BY ml.make
+        ORDER BY quantity DESC
+        LIMIT ${topValuesCount}
+      `),
+      db.execute(sql`
+        SELECT ml.id AS listing_id, ml.make, ml.model, COUNT(*) AS quantity
+        FROM marketplace_listings ml
+        CROSS JOIN LATERAL jsonb_array_elements(ml.sales_records) AS record
+        WHERE ml.user_id = ${userId}
+        GROUP BY ml.id, ml.make, ml.model
+        ORDER BY quantity DESC
+        LIMIT ${topValuesCount}
+      `),
+    ]);
+
+  const totalSaleValue = Number((totalResult.rows[0] as { total: string })?.total ?? 0);
+  const modelsSold = Number((modelsSoldResult.rows[0] as { total: string })?.total ?? 0);
+
+  // Build full month range for zero-filling
+  const monthRange: Array<{ year: number; month: number }> = [];
+  for (let i = monthsLookBack - 1; i >= 0; i--) {
+    let m = currentMonth - i;
+    let y = currentYear;
+    while (m <= 0) {
+      m += 12;
+      y -= 1;
+    }
+    monthRange.push({ year: y, month: m });
+  }
+
+  const saleValueMap = new Map<string, number>();
+  for (const row of saleValuePerMonthResult.rows as { year: string; month: string; value: string }[]) {
+    saleValueMap.set(`${row.year}-${row.month}`, Number(row.value));
+  }
+  const saleValuePerMonth = monthRange.map(({ year, month }) => ({
+    year,
+    month,
+    value: saleValueMap.get(`${year}-${month}`) ?? 0,
+  }));
+
+  const modelsSoldMap = new Map<string, number>();
+  for (const row of modelsSoldPerMonthResult.rows as { year: string; month: string; count: string }[]) {
+    modelsSoldMap.set(`${row.year}-${row.month}`, Number(row.count));
+  }
+  const modelsSoldPerMonth = monthRange.map(({ year, month }) => ({
+    year,
+    month,
+    count: modelsSoldMap.get(`${year}-${month}`) ?? 0,
+  }));
+
+  const topBrandsSold = (topBrandsResult.rows as { make: string; quantity: string }[]).map((r) => ({
+    make: r.make,
+    quantity: Number(r.quantity),
+  }));
+
+  const topListingsSold = (
+    topListingsResult.rows as { listing_id: string; make: string; model: string; quantity: string }[]
+  ).map((r) => ({
+    label: `${r.make} ${r.model}`,
+    quantity: Number(r.quantity),
+  }));
+
+  return {
+    totalSaleValue,
+    modelsSold,
+    saleValuePerMonth,
+    modelsSoldPerMonth,
+    topBrandsSold,
+    topListingsSold,
+  };
 }
 
 export async function getListingDetail(id: string): Promise<ListingDetail | null> {

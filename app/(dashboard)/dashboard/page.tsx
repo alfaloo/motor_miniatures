@@ -4,6 +4,8 @@ import { items, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import DashboardCharts from "./dashboard-charts";
+import MarketplaceCharts from "./marketplace-charts";
+import { getMarketplaceStats } from "@/lib/actions/marketplace";
 
 function formatDollars(amount: number): string {
   return `$${amount.toLocaleString()}`;
@@ -83,17 +85,8 @@ export default async function DashboardPage() {
     months.push({ year, month, label });
   }
 
-  // Trim leading months with no purchases so the charts show only from the
-  // first month that has activity (min of setting vs actual data range).
-  const firstActiveIdx = months.findIndex(({ year, month }) =>
-    allItems.some(
-      (item) => item.purchase_year === year && item.purchase_month === month
-    )
-  );
-  const activeMonths = firstActiveIdx === -1 ? [] : months.slice(firstActiveIdx);
-
   // Chart 1: Purchase Value Per Month
-  const purchaseValueByMonth = activeMonths.map(({ year, month, label }) => {
+  const purchaseValueByMonth = months.map(({ year, month, label }) => {
     const value = allItems
       .filter(
         (item) => item.purchase_year === year && item.purchase_month === month
@@ -103,7 +96,7 @@ export default async function DashboardPage() {
   });
 
   // Chart 2: Models Purchased Per Month
-  const modelCountByMonth = activeMonths.map(({ year, month, label }) => {
+  const modelCountByMonth = months.map(({ year, month, label }) => {
     const count = allItems.filter(
       (item) => item.purchase_year === year && item.purchase_month === month
     ).length;
@@ -137,9 +130,39 @@ export default async function DashboardPage() {
     .slice(0, topValuesCount)
     .map(([name, count]) => ({ name, count }));
 
+  const marketplaceStats = await getMarketplaceStats(userId, {
+    monthsLookBack,
+    topValuesCount,
+  });
+
+  const marketplaceCards = [
+    { label: "Total Sale Value", value: formatDollars(marketplaceStats.totalSaleValue) },
+    { label: "Models Sold", value: marketplaceStats.modelsSold.toLocaleString() },
+  ];
+
+  // Marketplace chart data — map raw year/month to label using the same months array
+  const saleValueByMonth = months.map(({ year, month, label }) => {
+    const entry = marketplaceStats.saleValuePerMonth.find(
+      (e) => e.year === year && e.month === month
+    );
+    return { month: label, value: entry?.value ?? 0 };
+  });
+
+  const modelsSoldByMonth = months.map(({ year, month, label }) => {
+    const entry = marketplaceStats.modelsSoldPerMonth.find(
+      (e) => e.year === year && e.month === month
+    );
+    return { month: label, count: entry?.count ?? 0 };
+  });
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
+
+      {/* Collection Stats Section */}
+      <h2 className="text-lg font-medium text-foreground border-b border-border pb-2 mb-6">
+        Collection Stats
+      </h2>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
@@ -160,6 +183,34 @@ export default async function DashboardPage() {
         modelCountByMonth={modelCountByMonth}
         topBrands={topBrands}
         topMakes={topMakes}
+        monthsLookBack={monthsLookBack}
+        topValuesCount={topValuesCount}
+      />
+
+      {/* Marketplace Stats Section */}
+      <h2 className="text-lg font-medium text-foreground border-b border-border pb-2 mb-6 mt-10">
+        Marketplace Stats
+      </h2>
+
+      {/* Marketplace Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        {marketplaceCards.map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Marketplace Charts */}
+      <MarketplaceCharts
+        saleValuePerMonth={saleValueByMonth}
+        modelsSoldPerMonth={modelsSoldByMonth}
+        topBrandsSold={marketplaceStats.topBrandsSold}
+        topListingsSold={marketplaceStats.topListingsSold}
         monthsLookBack={monthsLookBack}
         topValuesCount={topValuesCount}
       />

@@ -64,6 +64,7 @@ export function ListingForm({
   displayImageUrl,
 }: ListingFormProps) {
   const router = useRouter();
+
   const [localOptions, setLocalOptions] = useState<AddonOption[]>(options);
   const [checkedAddonIds, setCheckedAddonIds] = useState<Set<string>>(
     new Set(initialData?.addon_option_ids ?? [])

@@ -9,6 +9,7 @@ import {
   text,
   index,
   primaryKey,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const listingStatusEnum = pgEnum("listing_status", [
@@ -155,6 +156,8 @@ export const marketplaceListings = pgTable(
     total_price: integer("total_price").notNull(),
     display_image_url: varchar("display_image_url", { length: 512 }),
     status: listingStatusEnum("status").notNull().default("active"),
+    private_comments: text("private_comments"),
+    sales_records: jsonb("sales_records").$type<SalesRecord[]>().notNull().default([]),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("marketplace_listings_user_id_idx").on(table.user_id)]
@@ -192,6 +195,13 @@ export const userSocialLinks = pgTable(
 );
 
 // Type exports
+export type SalesRecord = {
+  id: string;        // crypto.randomUUID()
+  sale_year: number;
+  sale_month: number; // 1-12
+  sale_price: number; // integer
+};
+
 export type ListingStatus = (typeof listingStatusEnum.enumValues)[number];
 export type AddonCategory = typeof addonCategories.$inferSelect;
 export type NewAddonCategory = typeof addonCategories.$inferInsert;
